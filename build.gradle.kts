@@ -41,11 +41,11 @@ publishing {
         create<MavenPublication>("mavenJava") {
             from(components["java"])
             groupId = "cn.encmys"
-            artifactId = "HyphaScript"
+            artifactId = rootProject.name
             version = rootProject.version.toString()
 
             pom {
-                name.set("HyphaScript")
+                name.set(rootProject.name)
                 description.set("Script Engine for Forest MC plugin series.")
                 url.set("https://github.com/YKDZ") // 项目主页
                 licenses {

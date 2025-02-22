@@ -1,22 +1,30 @@
-import cn.encmys.ykdz.forest.hypha.context.Context;
-import cn.encmys.ykdz.forest.hypha.pack.PackManager;
-import cn.encmys.ykdz.forest.hypha.script.Script;
-import cn.encmys.ykdz.forest.hypha.script.ScriptManager;
-import cn.encmys.ykdz.forest.hypha.value.Value;
+import cn.encmys.ykdz.forest.hyphascript.context.Context;
+import cn.encmys.ykdz.forest.hyphascript.pack.PackManager;
+import cn.encmys.ykdz.forest.hyphascript.script.Script;
+import cn.encmys.ykdz.forest.hyphascript.script.ScriptManager;
+import cn.encmys.ykdz.forest.hyphascript.value.Value;
 
 public class HyphaScript {
     public static void main(String[] args) {
         PackManager.registerPack(new ConsolePack());
         String mainStr = """
                 import "console";
-                console.log(`Hello World! ${person.getName()}.`);
+                import "java.math.BigDecimal";
+                
+                try {
+                    new BigDecimal("test");
+                } catch e {
+                    console.log("catch  + e");
+                } finally {
+                    console.log("done");
+                }
                 """;
         Context mainCtx = Context.Builder.create()
                 .with("person", new Value(new Test("YKDZ", 18)))
                 .build();
         Script main = ScriptManager.createScript("main", mainStr, mainCtx);
 //        System.out.println(main.evaluate());
-        main.evaluate();
+        System.out.println(main.evaluate());
 
 //        // 创建一个包含多个 Value 对象的数组
 //        Reference[] values = new Reference[] {
