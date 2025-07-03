@@ -1,30 +1,23 @@
 package cn.encmys.ykdz.forest.hyphascript.value;
 
-import cn.encmys.ykdz.forest.hyphascript.exception.VariableException;
+import cn.encmys.ykdz.forest.hyphascript.exception.ReferenceException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class Reference implements Cloneable {
-    @Nullable
-    private final String name;
-    @NotNull
-    private Value value;
+    private @NotNull Value value;
     private boolean isConst;
-    private boolean isExported;
 
-    public Reference(@Nullable String name, @NotNull Value value) {
-        this(name, value, false, false);
+    public Reference(@NotNull Value value) {
+        this(value, false);
     }
 
-    public Reference(@Nullable String name, @NotNull Value value, boolean isConst, boolean isExported) {
-        this.name = name;
+    public Reference(@NotNull Value value, boolean isConst) {
         this.value = value;
         this.isConst = isConst;
-        this.isExported = isExported;
     }
 
     public Reference() {
-        this(null, new Value());
+        this(new Value());
     }
 
     public boolean isConst() {
@@ -35,35 +28,28 @@ public class Reference implements Cloneable {
         this.isConst = isConst;
     }
 
-    public boolean isExported() {
-        return isExported;
-    }
-
-    public void setExported(boolean isExported) {
-        this.isExported = isExported;
-    }
-
-    @Nullable
-    public String getName() {
-        return name;
-    }
-
-    public @NotNull Value getReferedValue() {
+    public @NotNull Value getReferredValue() {
         return value;
     }
 
     public void setReferredValue(@NotNull Value value) {
-        if (isConst) throw new VariableException(this, "Tried to reassign-value for const variable");
+        if (isConst) throw new ReferenceException(this, "Tried to reassign-value for const variable");
+        if (this.value.getType() != value.getType())
+            throw new ReferenceException(this, "Type error. New type is " + value.getType() + " but old type is " + this.value.getType());
         this.value = value;
     }
 
+    /**
+     * Value in reference will not be cloned
+     *
+     * @return Cloned
+     */
     @Override
     public Reference clone() {
         try {
             Reference cloned = (Reference) super.clone();
             cloned.value = this.value;
             cloned.isConst = this.isConst;
-            cloned.isExported = this.isExported;
             return cloned;
         } catch (CloneNotSupportedException e) {
             throw new AssertionError();
@@ -73,10 +59,8 @@ public class Reference implements Cloneable {
     @Override
     public String toString() {
         return "Reference{" +
-                "name='" + name + '\'' +
-                ", value=" + value +
+                "value=" + value.toReadableString() +
                 ", isConst=" + isConst +
-                ", isExported=" + isExported +
                 '}';
     }
 

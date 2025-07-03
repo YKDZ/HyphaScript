@@ -15,6 +15,11 @@ public class ValueException extends RuntimeException {
     }
 
     @Override
+    public @NotNull String getMessage() {
+        return message;
+    }
+
+    @Override
     public String toString() {
         return "ValueException{" +
                 "value=" + value +

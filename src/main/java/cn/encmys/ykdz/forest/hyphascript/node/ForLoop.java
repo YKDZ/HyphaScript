@@ -4,6 +4,7 @@ import cn.encmys.ykdz.forest.hyphascript.context.Context;
 import cn.encmys.ykdz.forest.hyphascript.exception.BreakNotificationException;
 import cn.encmys.ykdz.forest.hyphascript.exception.ContinueNotificationException;
 import cn.encmys.ykdz.forest.hyphascript.exception.EvaluateException;
+import cn.encmys.ykdz.forest.hyphascript.token.Token;
 import cn.encmys.ykdz.forest.hyphascript.value.Reference;
 import cn.encmys.ykdz.forest.hyphascript.value.Value;
 import org.jetbrains.annotations.NotNull;
@@ -20,7 +21,8 @@ public class ForLoop extends ASTNode {
     @NotNull
     private final ASTNode body;
 
-    public ForLoop(@NotNull ASTNode initialization, @NotNull ASTNode condition, @NotNull ASTNode afterThought, @NotNull ASTNode body) {
+    public ForLoop(@NotNull ASTNode initialization, @NotNull ASTNode condition, @NotNull ASTNode afterThought, @NotNull ASTNode body, @NotNull Token startToken, @NotNull Token endToken) {
+        super(startToken, endToken);
         this.initialization = initialization;
         this.condition = condition;
         this.afterThought = afterThought;
@@ -29,11 +31,11 @@ public class ForLoop extends ASTNode {
 
     @Override
     public @NotNull Reference evaluate(@NotNull Context ctx) {
-        Context localContext = new Context(Context.Type.LOOP, ctx);
+        Context localContext = new Context(ctx);
         initialization.evaluate(localContext);
 
         while (true) {
-            Value conditionResult = condition.evaluate(localContext).getReferedValue();
+            Value conditionResult = condition.evaluate(localContext).getReferredValue();
             if (!conditionResult.isType(Value.Type.BOOLEAN, Value.Type.NULL)) {
                 throw new EvaluateException(this, "Result of for-loop condition must be boolean.");
             }
@@ -45,8 +47,8 @@ public class ForLoop extends ASTNode {
                 body.evaluate(localContext);
             } catch (BreakNotificationException ignored) {
                 break;
-            } catch (ContinueNotificationException ignored) {}
-            finally {
+            } catch (ContinueNotificationException ignored) {
+            } finally {
                 afterThought.evaluate(localContext);
             }
         }

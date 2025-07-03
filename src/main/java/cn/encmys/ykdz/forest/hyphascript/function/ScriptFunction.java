@@ -3,71 +3,130 @@ package cn.encmys.ykdz.forest.hyphascript.function;
 import cn.encmys.ykdz.forest.hyphascript.context.Context;
 import cn.encmys.ykdz.forest.hyphascript.exception.ReturnNotificationException;
 import cn.encmys.ykdz.forest.hyphascript.node.ASTNode;
+import cn.encmys.ykdz.forest.hyphascript.oop.ScriptObject;
+import cn.encmys.ykdz.forest.hyphascript.oop.internal.InternalObjectManager;
+import cn.encmys.ykdz.forest.hyphascript.utils.ContextUtils;
+import cn.encmys.ykdz.forest.hyphascript.utils.FunctionUtils;
+import cn.encmys.ykdz.forest.hyphascript.utils.StringUtils;
 import cn.encmys.ykdz.forest.hyphascript.value.Reference;
 import cn.encmys.ykdz.forest.hyphascript.value.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.function.Consumer;
 
-public class ScriptFunction implements Function {
-    @NotNull
-    private final List<String> receivers;
-    @NotNull
-    private final List<String> parameters;
-    @NotNull
-    private final ASTNode body;
-    @Nullable
-    private Context capturedContext;
+public class ScriptFunction extends ScriptObject implements Function, Cloneable {
+    private @NotNull String name;
+    private @NotNull LinkedHashMap<String, ASTNode> parameters;
+    private @NotNull String uncertainParameter;
+    private @NotNull ASTNode body;
+    private @NotNull Context capturedContext;
+    private @Nullable Value manualTarget;
 
-    public ScriptFunction(@NotNull List<String> receivers, @NotNull List<String> parameters, @NotNull ASTNode body) {
-        this.receivers = receivers;
+    public ScriptFunction(@NotNull String name, @NotNull LinkedHashMap<String, ASTNode> parameters, @NotNull String uncertainParameter, @NotNull ASTNode body, @NotNull Context capturedContext) {
+        super(InternalObjectManager.FUNCTION_PROTOTYPE);
+        super.declareMember("prototype", new Reference(new Value(new ScriptObject.Builder()
+                .withMember("constructor", new Reference(new Value(this)))
+                .build())));
+        this.name = name;
         this.parameters = parameters;
+        this.uncertainParameter = uncertainParameter;
         this.body = body;
+        this.capturedContext = capturedContext;
     }
 
     @Override
-    public @NotNull Reference call(@NotNull Context ctx, @NotNull List<Value> receiversArgs, @NotNull List<Value> args) {
-        if (args.size() != parameters.size())
-            throw new RuntimeException("Argument amount of function mismatch");
+    public @NotNull Reference call(@NotNull Value targetValue, @NotNull List<Value> arguments, @NotNull Context ctx) {
+        return executeCall(targetValue, ctx, localContext ->
+                FunctionUtils.injectArguments(localContext, this.parameters, arguments, uncertainParameter)
+        );
+    }
 
-        Context localContext = new Context(Context.Type.FUNCTION, Objects.requireNonNullElse(capturedContext, ctx));
-        for (int i = 0; i < parameters.size(); i++) {
-            localContext.declareReference(parameters.get(i), args.get(i));
-        }
-        for (int i = 0; i < receivers.size(); i++) {
-            localContext.declareReference(receivers.get(i), receiversArgs.get(i));
-        }
+    @Override
+    public @NotNull Reference call(@NotNull Value targetValue, @NotNull Map<String, Value> arguments, @NotNull Context ctx) {
+        return executeCall(targetValue, ctx, localContext ->
+                FunctionUtils.injectArguments(localContext, this.parameters, arguments, uncertainParameter)
+        );
+    }
 
-        Reference result;
+    public @NotNull Reference executeCall(
+            @NotNull Value targetValue,
+            @NotNull Context ctx,
+            @NotNull Consumer<@NotNull Context> argumentInjector
+    ) {
+        Value target = manualTarget == null ? targetValue : manualTarget;
+
+        Context localContext = new Context(ctx.equals(capturedContext) ? ctx : ContextUtils.linkContext(
+                ctx.clone(),
+                capturedContext.clone()
+        ));
+        localContext.declareMember("this", target);
+
         try {
-            result = body.evaluate(localContext);
+            Function superConstructor = super
+                    .findMember("__home_object__").getReferredValue().getAsScriptObject()
+                    .getProto().getAsScriptObject()
+                    .findMember("constructor").getReferredValue().getAsFunction();
+            superConstructor.setManualTarget(target);
+            localContext.declareMember("super", new Value(superConstructor));
+        } catch (Exception ignored) {
+        }
+
+        argumentInjector.accept(localContext);
+
+        Reference result = new Reference();
+        try {
+            // 若没有显式指定 return
+            // 则什么都不会返回
+            body.evaluate(localContext);
         } catch (ReturnNotificationException e) {
             result = e.getReturnedReference();
         }
         // 若函数的返回值是函数
         // 则当前上下文链需要被储存到返回的函数中
-        if (!result.getReferedValue().isType(Value.Type.VOID) && result.getReferedValue().getValue() instanceof ScriptFunction) {
-           ((ScriptFunction) result.getReferedValue().getValue()).capturedContext = localContext;
+        if (!result.getReferredValue().isType(Value.Type.VOID) && result.getReferredValue().getValue() instanceof ScriptFunction) {
+            ((ScriptFunction) result.getReferredValue().getValue()).capturedContext = localContext;
         }
 
         return result;
     }
 
     @Override
-    public @NotNull List<String> getReceivers() {
-        return receivers;
+    public @NotNull String getName() {
+        return name;
     }
 
     @Override
-    public @Nullable Context getCapturedContext() {
+    public @NotNull LinkedHashMap<String, ASTNode> getParameters() {
+        return parameters;
+    }
+
+    @Override
+    public @NotNull Context getCapturedContext() {
         return capturedContext;
     }
 
     @Override
-    public void setCapturedContext(@Nullable Context capturedContext) {
+    public void setCapturedContext(@NotNull Context capturedContext) {
         this.capturedContext = capturedContext;
+    }
+
+    @Override
+    public @NotNull ScriptObject getPrototype() {
+        return super.findMember("prototype").getReferredValue().getAsScriptObject();
+    }
+
+    public @NotNull ASTNode getBody() {
+        return body;
+    }
+
+    @Override
+    public void setManualTarget(@Nullable Value manualTarget) {
+        this.manualTarget = manualTarget;
     }
 
     @Override
@@ -81,5 +140,45 @@ public class ScriptFunction implements Function {
     @Override
     public int hashCode() {
         return Objects.hash(parameters, body, capturedContext);
+    }
+
+    @Override
+    public ScriptObject clone() {
+        try {
+            ScriptFunction cloned = (ScriptFunction) super.clone();
+
+            cloned.name = this.name;
+            cloned.parameters = new LinkedHashMap<>(this.parameters);
+            cloned.uncertainParameter = this.uncertainParameter;
+
+            cloned.body = this.body;
+
+            cloned.capturedContext = this.capturedContext;
+
+            cloned.manualTarget = this.manualTarget != null ? this.manualTarget : null;
+
+            return cloned;
+        } catch (CloneNotSupportedException e) {
+            throw new AssertionError(e);
+        }
+    }
+
+    @Override
+    public @NotNull String toString() {
+        final StringBuilder sb = new StringBuilder();
+
+        final String funcName = this.getName();
+        final String funcType = funcName.isEmpty() ? "ArrowFunction" : "Function";
+
+        sb.append("[")
+                .append(funcType);
+
+        if (funcType.equals("Function")) {
+            sb.append(" ").append(funcName);
+        }
+
+        StringUtils.formatParameters(sb, this.getParameters().keySet());
+
+        return sb.toString();
     }
 }

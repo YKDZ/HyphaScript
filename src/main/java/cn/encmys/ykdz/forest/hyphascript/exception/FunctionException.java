@@ -12,10 +12,24 @@ public class FunctionException extends RuntimeException {
     @Nullable
     private final Throwable cause;
 
+    public FunctionException(@NotNull Function function, @NotNull String message) {
+        this(function, message, null);
+    }
+
     public FunctionException(@NotNull Function function, @NotNull String message, @Nullable Throwable cause) {
         this.message = message;
         this.function = function;
         this.cause = cause;
+    }
+
+    @Override
+    public @Nullable Throwable getCause() {
+        return cause;
+    }
+
+    @Override
+    public @NotNull String getMessage() {
+        return message;
     }
 
     @Override

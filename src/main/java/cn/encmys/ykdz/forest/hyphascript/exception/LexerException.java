@@ -4,13 +4,11 @@ import org.jetbrains.annotations.NotNull;
 
 public class LexerException extends RuntimeException {
     private final @NotNull String message;
-    private final @NotNull String script;
     private final int line;
     private final int column;
 
-    public LexerException(@NotNull String message, @NotNull String script,  int line, int column) {
+    public LexerException(@NotNull String message, int line, int column) {
         this.message = message;
-        this.script = script;
         this.line = line;
         this.column = column;
     }
@@ -32,7 +30,6 @@ public class LexerException extends RuntimeException {
     public String toString() {
         return "LexerException{" +
                 "message='" + message + '\'' +
-                ", script='" + script + '\'' +
                 ", line=" + line +
                 ", column=" + column +
                 '}';

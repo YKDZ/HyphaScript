@@ -1,6 +1,7 @@
 package cn.encmys.ykdz.forest.hyphascript.node;
 
 import cn.encmys.ykdz.forest.hyphascript.context.Context;
+import cn.encmys.ykdz.forest.hyphascript.token.Token;
 import cn.encmys.ykdz.forest.hyphascript.value.Reference;
 import cn.encmys.ykdz.forest.hyphascript.value.Value;
 import org.jetbrains.annotations.NotNull;
@@ -15,7 +16,8 @@ public class Conditional extends ASTNode {
     @NotNull
     private final ASTNode elseBranch;
 
-    public Conditional(@NotNull ASTNode condition, @NotNull ASTNode thenBranch, @NotNull ASTNode elseBranch) {
+    public Conditional(@NotNull ASTNode condition, @NotNull ASTNode thenBranch, @NotNull ASTNode elseBranch, @NotNull Token startToken, @NotNull Token endToken) {
+        super(startToken, endToken);
         this.condition = condition;
         this.thenBranch = thenBranch;
         this.elseBranch = elseBranch;
@@ -23,11 +25,8 @@ public class Conditional extends ASTNode {
 
     @Override
     public @NotNull Reference evaluate(@NotNull Context ctx) {
-        Value conditionValue = condition.evaluate(ctx).getReferedValue();
-        if (conditionValue.isType(Value.Type.BOOLEAN, Value.Type.NULL)) {
-            return conditionValue.getAsBoolean() ? thenBranch.evaluate(ctx) : elseBranch.evaluate(ctx);
-        }
-        throw new RuntimeException("Condition must evaluate to a boolean");
+        Value conditionValue = condition.evaluate(ctx).getReferredValue();
+        return conditionValue.getAsBoolean() ? thenBranch.evaluate(ctx) : elseBranch.evaluate(ctx);
     }
 
     @Override

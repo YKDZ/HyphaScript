@@ -2,7 +2,7 @@ package cn.encmys.ykdz.forest.hyphascript.node;
 
 import cn.encmys.ykdz.forest.hyphascript.context.Context;
 import cn.encmys.ykdz.forest.hyphascript.exception.EvaluateException;
-import cn.encmys.ykdz.forest.hyphascript.parser.token.Token;
+import cn.encmys.ykdz.forest.hyphascript.token.Token;
 import cn.encmys.ykdz.forest.hyphascript.value.Reference;
 import cn.encmys.ykdz.forest.hyphascript.value.Value;
 import org.jetbrains.annotations.NotNull;
@@ -15,25 +15,28 @@ public class UnaryOperation extends ASTNode {
     @NotNull
     private final ASTNode target;
 
-    public UnaryOperation(@NotNull Token.Type operator, @NotNull ASTNode target) {
+    public UnaryOperation(@NotNull Token.Type operator, @NotNull ASTNode target, @NotNull Token startToken, @NotNull Token endToken) {
+        super(startToken, endToken);
         this.operator = operator;
         this.target = target;
     }
 
     @Override
     public @NotNull Reference evaluate(@NotNull Context ctx) {
-        Value targetValue = target.evaluate(ctx).getReferedValue();
+        Value targetValue = target.evaluate(ctx).getReferredValue();
 
         return switch (operator) {
             case BANG -> {
-                if (!targetValue.isType(Value.Type.BOOLEAN, Value.Type.NULL)) throw new IllegalArgumentException("! operator can only be casted in boolean.");
-                yield new Reference(null, new Value(!targetValue.getAsBoolean()));
+                if (!targetValue.isType(Value.Type.BOOLEAN, Value.Type.NULL))
+                    throw new IllegalArgumentException("! operator can only be casted in boolean.");
+                yield new Reference(new Value(!targetValue.getAsBoolean()));
             }
             case MINUS -> {
-                if (!targetValue.isType(Value.Type.BIG_DECIMAL, Value.Type.NULL)) throw new IllegalArgumentException("- operator can only be casted in number.");
-                yield new Reference(null, new Value(targetValue.getAsBigDecimal().negate()));
+                if (!targetValue.isType(Value.Type.NUMBER, Value.Type.NULL))
+                    throw new IllegalArgumentException("- operator can only be casted in number.");
+                yield new Reference(new Value(targetValue.getAsBigDecimal().negate()));
             }
-            case TYPEOF -> new Reference(null, new Value(targetValue.getType().name()));
+            case TYPEOF -> new Reference(new Value(targetValue.getType().name()));
             default -> throw new EvaluateException(this, "Unary operator '" + operator + "' is not supported.");
         };
     }

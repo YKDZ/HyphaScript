@@ -2,24 +2,30 @@ package cn.encmys.ykdz.forest.hyphascript.node;
 
 import cn.encmys.ykdz.forest.hyphascript.context.Context;
 import cn.encmys.ykdz.forest.hyphascript.exception.EvaluateException;
-import cn.encmys.ykdz.forest.hyphascript.parser.token.Token;
+import cn.encmys.ykdz.forest.hyphascript.exception.ReferenceException;
+import cn.encmys.ykdz.forest.hyphascript.exception.ValueException;
+import cn.encmys.ykdz.forest.hyphascript.token.Token;
 import cn.encmys.ykdz.forest.hyphascript.value.Reference;
 import cn.encmys.ykdz.forest.hyphascript.value.Value;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Arrays;
 import java.util.Objects;
+import java.util.stream.Stream;
 
 public class Assignment extends ASTNode {
     @NotNull
     private final Token.Type operator;
     @NotNull
-    private final MemberAccess target;
+    private final ASTNode target;
     @NotNull
     private final ASTNode expression;
 
-    public Assignment(@NotNull Token.Type operator, @NotNull MemberAccess target, @NotNull ASTNode expression) {
+    public Assignment(@NotNull Token.Type operator, @NotNull ASTNode target, @NotNull ASTNode expression, @NotNull Token startToken) {
+        super(startToken, startToken);
         this.operator = operator;
         this.target = target;
         this.expression = expression;
@@ -27,68 +33,115 @@ public class Assignment extends ASTNode {
 
     @Override
     public @NotNull Reference evaluate(@NotNull Context ctx) {
-        Reference targetRef = target.evaluate(ctx);
-        Reference valueRef = expression.evaluate(ctx);
-
-        if (targetRef.getReferedValue().isType(Value.Type.JAVA_FIELD))
-            throw new EvaluateException(this, "Do not support to modify java field directly.");
+        final Reference targetRef = target.evaluate(ctx);
 
         if (targetRef.isConst())
-            throw new EvaluateException(this, "Tried to re-assign value to const value " + valueRef);
+            throw new EvaluateException(this, "Tried to re-assign value to const ref: " + targetRef);
+
+        final Reference valueRef = expression.evaluate(ctx);
 
         return switch (operator) {
             case EQUALS -> {
-                targetRef.setReferredValue(valueRef.getReferedValue());
+                setValueOfRef(targetRef, valueRef.getReferredValue());
                 yield new Reference();
             }
             case COLON_EQUALS -> {
-                targetRef.setReferredValue(valueRef.getReferedValue());
+                setValueOfRef(targetRef, valueRef.getReferredValue());
                 yield valueRef;
             }
             case PLUS_EQUALS -> {
                 // += 字符拼接
-                if (targetRef.getReferedValue().isType(Value.Type.STRING) || targetRef.getReferedValue().isType(Value.Type.CHAR)) {
-                    String targetString = targetRef.getReferedValue().getAsString();
-                    String valueString = valueRef.getReferedValue().toString();
-                    targetRef.getReferedValue().setValue(targetString.concat(valueString));
+                if (targetRef.getReferredValue().isType(Value.Type.STRING) || targetRef.getReferredValue().isType(Value.Type.CHAR)) {
+                    final String targetString = targetRef.getReferredValue().getAsString();
+                    // 视作 String
+                    final String valueString = valueRef.getReferredValue().toString();
+                    setValueOfValue(targetRef.getReferredValue(), targetString.concat(valueString));
+                    yield new Reference();
+                } else if (targetRef.getReferredValue().isType(Value.Type.ARRAY)) {
+                    final Reference[] leftArray = targetRef.getReferredValue().getAsArray();
+                    // 数组 + 数组
+                    if (valueRef.getReferredValue().isType(Value.Type.ARRAY)) {
+                        final Reference[] rightArray = valueRef.getReferredValue().getAsArray();
+                        targetRef.setReferredValue(new Value(
+                                Stream.concat(Arrays.stream(leftArray), Arrays.stream(rightArray))
+                                        .toArray(Reference[]::new)
+                        ));
+                    }
+                    // 数组 + 引用
+                    else {
+                        targetRef.setReferredValue(new Value(
+                                Stream.concat(
+                                        Stream.of(leftArray).map(Reference::clone),
+                                        Stream.of(valueRef.clone())
+                                )));
+                    }
                     yield new Reference();
                 }
-                if (!targetRef.getReferedValue().isType(Value.Type.BIG_DECIMAL) || !valueRef.getReferedValue().isType(Value.Type.BIG_DECIMAL)) throw new EvaluateException(this, "Unsupported value type for operator");
-                BigDecimal targetDecimal = targetRef.getReferedValue().getAsBigDecimal();
-                BigDecimal valueDecimal = valueRef.getReferedValue().getAsBigDecimal();
-                targetRef.getReferedValue().setValue(valueDecimal.add(targetDecimal));
+                if (!targetRef.getReferredValue().isType(Value.Type.NUMBER) || !valueRef.getReferredValue().isType(Value.Type.NUMBER))
+                    throw new EvaluateException(this, "Unsupported value type for operator");
+                final BigDecimal targetDecimal = targetRef.getReferredValue().getAsBigDecimal();
+                final BigDecimal valueDecimal = valueRef.getReferredValue().getAsBigDecimal();
+                setValueOfValue(targetRef.getReferredValue(), targetDecimal.add(valueDecimal));
                 yield new Reference();
             }
             case MINUS_EQUALS -> {
-                if (!targetRef.getReferedValue().isType(Value.Type.BIG_DECIMAL) || !valueRef.getReferedValue().isType(Value.Type.BIG_DECIMAL)) throw new EvaluateException(this, "Unsupported value type for operator");
-                BigDecimal targetDecimal = targetRef.getReferedValue().getAsBigDecimal();
-                BigDecimal valueDecimal = valueRef.getReferedValue().getAsBigDecimal();
-                targetRef.getReferedValue().setValue(valueDecimal.subtract(targetDecimal));
+                if (!targetRef.getReferredValue().isType(Value.Type.NUMBER) || !valueRef.getReferredValue().isType(Value.Type.NUMBER))
+                    throw new EvaluateException(this, "Unsupported value type for operator");
+                final BigDecimal targetDecimal = targetRef.getReferredValue().getAsBigDecimal();
+                final BigDecimal valueDecimal = valueRef.getReferredValue().getAsBigDecimal();
+                setValueOfValue(targetRef.getReferredValue(), targetDecimal.subtract(valueDecimal));
                 yield new Reference();
             }
             case MUL_EQUALS -> {
-                if (!targetRef.getReferedValue().isType(Value.Type.BIG_DECIMAL) || !valueRef.getReferedValue().isType(Value.Type.BIG_DECIMAL)) throw new EvaluateException(this, "Unsupported value type for operator");
-                BigDecimal targetDecimal = targetRef.getReferedValue().getAsBigDecimal();
-                BigDecimal valueDecimal = valueRef.getReferedValue().getAsBigDecimal();
-                targetRef.getReferedValue().setValue(valueDecimal.multiply(targetDecimal));
+                if (!targetRef.getReferredValue().isType(Value.Type.NUMBER) || !valueRef.getReferredValue().isType(Value.Type.NUMBER))
+                    throw new EvaluateException(this, "Unsupported value type for operator");
+                final BigDecimal targetDecimal = targetRef.getReferredValue().getAsBigDecimal();
+                final BigDecimal valueDecimal = valueRef.getReferredValue().getAsBigDecimal();
+                setValueOfValue(targetRef.getReferredValue(), targetDecimal.multiply(valueDecimal));
                 yield new Reference();
             }
             case DIV_EQUALS -> {
-                if (!targetRef.getReferedValue().isType(Value.Type.BIG_DECIMAL) || !valueRef.getReferedValue().isType(Value.Type.BIG_DECIMAL)) throw new EvaluateException(this, "Unsupported value type for operator");
-                BigDecimal targetDecimal = targetRef.getReferedValue().getAsBigDecimal();
-                BigDecimal valueDecimal = valueRef.getReferedValue().getAsBigDecimal();
-                targetRef.getReferedValue().setValue(valueDecimal.divide(targetDecimal, RoundingMode.HALF_UP));
+                if (!targetRef.getReferredValue().isType(Value.Type.NUMBER) || !valueRef.getReferredValue().isType(Value.Type.NUMBER))
+                    throw new EvaluateException(this, "Unsupported value type for operator");
+                final BigDecimal targetDecimal = targetRef.getReferredValue().getAsBigDecimal();
+                final BigDecimal valueDecimal = valueRef.getReferredValue().getAsBigDecimal();
+                setValueOfValue(targetRef.getReferredValue(), targetDecimal.divide(valueDecimal, RoundingMode.HALF_UP));
                 yield new Reference();
             }
             case MOD_EQUALS -> {
-                if (!targetRef.getReferedValue().isType(Value.Type.BIG_DECIMAL) || !valueRef.getReferedValue().isType(Value.Type.BIG_DECIMAL)) throw new EvaluateException(this, "Unsupported value type for operator");
-                BigDecimal targetDecimal = targetRef.getReferedValue().getAsBigDecimal();
-                BigDecimal valueDecimal = valueRef.getReferedValue().getAsBigDecimal();
-                targetRef.getReferedValue().setValue(valueDecimal.remainder(targetDecimal));
+                if (!targetRef.getReferredValue().isType(Value.Type.NUMBER) || !valueRef.getReferredValue().isType(Value.Type.NUMBER))
+                    throw new EvaluateException(this, "Unsupported value type for operator");
+                final BigDecimal targetDecimal = targetRef.getReferredValue().getAsBigDecimal();
+                final BigDecimal valueDecimal = valueRef.getReferredValue().getAsBigDecimal();
+                setValueOfValue(targetRef.getReferredValue(), targetDecimal.remainder(valueDecimal));
+                yield new Reference();
+            }
+            case POWER_EQUALS -> {
+                if (!targetRef.getReferredValue().isType(Value.Type.NUMBER) || !valueRef.getReferredValue().isType(Value.Type.NUMBER))
+                    throw new EvaluateException(this, "Unsupported value type for operator");
+                final BigDecimal targetDecimal = targetRef.getReferredValue().getAsBigDecimal();
+                final BigDecimal valueDecimal = valueRef.getReferredValue().getAsBigDecimal();
+                setValueOfValue(targetRef.getReferredValue(), targetDecimal.pow(valueDecimal.intValue()));
                 yield new Reference();
             }
             default -> throw new EvaluateException(this, "Unsupported operator");
         };
+    }
+
+    private void setValueOfRef(@NotNull Reference ref, @NotNull Value value) {
+        try {
+            ref.setReferredValue(value);
+        } catch (ReferenceException e) {
+            throw new EvaluateException(this, e.getMessage(), e);
+        }
+    }
+
+    private void setValueOfValue(@NotNull Value value, @Nullable Object newValue) {
+        try {
+            value.setValue(newValue);
+        } catch (ValueException e) {
+            throw new EvaluateException(this, e.getMessage(), e);
+        }
     }
 
     @Override

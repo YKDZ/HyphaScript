@@ -3,68 +3,78 @@ package cn.encmys.ykdz.forest.hyphascript.node;
 import cn.encmys.ykdz.forest.hyphascript.context.Context;
 import cn.encmys.ykdz.forest.hyphascript.exception.EvaluateException;
 import cn.encmys.ykdz.forest.hyphascript.function.Function;
-import cn.encmys.ykdz.forest.hyphascript.script.ScriptManager;
+import cn.encmys.ykdz.forest.hyphascript.token.Token;
 import cn.encmys.ykdz.forest.hyphascript.utils.ReflectionUtils;
 import cn.encmys.ykdz.forest.hyphascript.value.Reference;
 import cn.encmys.ykdz.forest.hyphascript.value.Value;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.invoke.MethodHandle;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
+import java.util.Map;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class FunctionCall extends ASTNode {
-    @NotNull
-    private final ASTNode target;
-    @NotNull
-    private final MemberAccess function;
-    @NotNull
-    private final List<ASTNode> arguments;
+    private final @NotNull ASTNode target;
+    private final @NotNull String functionName;
+    private @Nullable List<ASTNode> argList;
+    private @Nullable Map<String, ASTNode> argMap;
 
-    public FunctionCall(@NotNull ASTNode target, @NotNull MemberAccess function, @NotNull List<ASTNode> arguments) {
+    public FunctionCall(@NotNull ASTNode target, @NotNull String functionName, @NotNull List<ASTNode> argList, @NotNull Token startToken, @NotNull Token endToken) {
+        super(startToken, endToken);
         this.target = target;
-        this.function = function;
-        this.arguments = arguments;
+        this.functionName = functionName;
+        this.argList = argList;
+    }
+
+    public FunctionCall(@NotNull ASTNode target, @NotNull String functionName, @NotNull Map<String, ASTNode> argMap, @NotNull Token startToken, @NotNull Token endToken) {
+        super(startToken, endToken);
+        this.target = target;
+        this.functionName = functionName;
+        this.argMap = argMap;
     }
 
     @Override
     public @NotNull Reference evaluate(@NotNull Context ctx) {
-        Value functionValue = function.evaluate(ctx).getReferedValue();
+        Value functionValue;
+        Value targetValue = new Value(Context.GLOBAL_OBJECT);
+
+        // 若 functionName 为空
+        // 则代表 target 本身返回的就是 function
+        // 否则 function 是一个成员访问
+        if (functionName.isEmpty()) {
+            functionValue = target.evaluate(ctx).getReferredValue();
+        } else {
+            targetValue = target.evaluate(ctx).getReferredValue();
+            functionValue = MemberAccess.findMemberFromTarget(targetValue, functionName, true, this).getReferredValue();
+        }
 
         return switch (functionValue.getType()) {
+            case SCRIPT_OBJECT -> {
+                Function function;
+                try {
+                    function = functionValue.getAsScriptObject()
+                            .findMember("prototype").getReferredValue().getAsScriptObject()
+                            .findMember("constructor").getReferredValue().getAsFunction();
+                } catch (Exception e) {
+                    throw new EvaluateException(this, e.getMessage(), e);
+                }
+                yield callFunction(targetValue, function, ctx);
+            }
             case FUNCTION -> {
                 Function function = functionValue.getAsFunction();
-                List<Value> evaluatedArgs = arguments.stream()
-                        .map(arg -> arg.evaluate(ctx).getReferedValue())
-                        .toList();
-                // 从原始上下文寻找所需的 receiver
-                // 若未找到则默认为 null
-                // TODO 错误处理
-                List<Value> receiverArgs = function.getReceivers().stream()
-                        .map(name -> ctx.findMember(name).getReferedValue())
-                        .toList();
-                int functionHash = function.hashCode();
-                Context calledCtx = ctx;
-                if (ctx.isImportedMember(functionHash)) {
-                    calledCtx = ScriptManager.getScript(ctx.getImportMemberOrigin(functionHash)).getContext();
-                }
-                yield function.call(calledCtx, receiverArgs, evaluatedArgs);
+                yield callFunction(targetValue, function, ctx);
             }
             case JAVA_METHOD_HANDLES -> {
-                Value targetValue = target.evaluate(ctx).getReferedValue();
-
-                if (targetValue.getValue() == null) {
-                    throw new EvaluateException(this, "Target object is null");
-                }
+                if (argList == null)
+                    throw new EvaluateException(this, "Java method can only be called with list parameters");
 
                 // MethodHandle 的参数列表的第一个参数是实例本身（如果是实例方法）
-                Object[] evaluatedArgs = Stream.concat(
-                                Stream.of(targetValue.getValue()),
-                                arguments.stream()
-                                        .map(arg -> arg.evaluate(ctx).getReferedValue().getValue())
-                        )
+                Object[] evaluatedArgs = Stream.concat(Stream.of(targetValue.getValue()), argList.stream()
+                                .map(arg -> arg.evaluate(ctx).getReferredValue().getValue()))
                         .toArray();
 
                 MethodHandle[] methodHandles = functionValue.getAsMethodHandles();
@@ -73,7 +83,7 @@ public class FunctionCall extends ASTNode {
                 try {
                     matchingHandle = ReflectionUtils.selectFirstMatchingMethodHandle(methodHandles, evaluatedArgs);
                 } catch (Throwable e) {
-                    throw new EvaluateException(this, "Error when searching matched method handle with arguments: " +  Arrays.toString(evaluatedArgs), e);
+                    throw new EvaluateException(this, "Error when searching matched method handle with arguments: " + Arrays.toString(evaluatedArgs), e);
                 }
                 if (matchingHandle == null) {
                     throw new EvaluateException(this, "No matching MethodHandle found for the provided arguments: " + Arrays.toString(evaluatedArgs));
@@ -81,33 +91,77 @@ public class FunctionCall extends ASTNode {
 
                 try {
                     Object result = ReflectionUtils.invokeMethodHandle(matchingHandle, evaluatedArgs);
-                    yield new Reference(null, new Value(result));
+                    yield new Reference(new Value(result));
                 } catch (Throwable e) {
                     throw new EvaluateException(this, "Error invoking Java method", e);
                 }
             }
-            default -> throw new EvaluateException(this, "Member " + functionValue + " is not a function or java method.");
+
+            default ->
+                    throw new EvaluateException(this, functionName + " is not a function or java method but " + functionValue.getType());
         };
+    }
+
+    private @NotNull Reference callFunction(@NotNull Value target, @NotNull Function function, @NotNull Context ctx) {
+        if (argList == null && argMap != null) {
+            return callFunctionWithParaMap(target, function, argMap, ctx);
+        } else if (argMap == null && argList != null) {
+            return callFunctionWithParaList(target, function, argList, ctx);
+        }
+        throw new EvaluateException(this, "Cannot call function \"" + function.getName() + "\" with both para list and para map is null");
+    }
+
+    private @NotNull Reference callFunctionWithParaMap(@NotNull Value target, @NotNull Function function, @NotNull Map<String, ASTNode> paras, @NotNull Context ctx) {
+        Map<String, Value> evaluatedArgs = paras.entrySet().stream()
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        entry -> entry.getValue().evaluate(ctx).getReferredValue()
+                ));
+        return callFunction(target, function, evaluatedArgs, ctx);
+    }
+
+    private @NotNull Reference callFunctionWithParaList(@NotNull Value target, @NotNull Function function, @NotNull List<ASTNode> paras, @NotNull Context ctx) {
+        List<@NotNull Value> evaluatedArgs = paras.stream()
+                .map(arg -> arg.evaluate(ctx).getReferredValue())
+                .toList();
+        return callFunction(target, function, evaluatedArgs, ctx);
+    }
+
+    private @NotNull Reference callFunction(@NotNull Value target, @NotNull Function function, @NotNull List<Value> args, @NotNull Context ctx) {
+        try {
+            return function.call(target, args, ctx);
+        }
+        // 不能拦截内部的 EvaluateException
+        // 否则将导致函数内出现的错误在报错信息中
+        // 都被指示为函数体本身
+        catch (EvaluateException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new EvaluateException(this, e.getMessage());
+        }
+    }
+
+    private @NotNull Reference callFunction(@NotNull Value target, @NotNull Function function, @NotNull Map<String, Value> args, @NotNull Context ctx) {
+        try {
+            return function.call(target, args, ctx);
+        }
+        // 不能拦截内部的 EvaluateException
+        // 否则将导致函数内出现的错误在报错信息中
+        // 都被指示为函数体本身
+        catch (EvaluateException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new EvaluateException(this, e.getMessage());
+        }
     }
 
     @Override
     public String toString() {
         return "FunctionCall{" +
-                "function=" + function +
-                ", arguments=" + arguments +
+                "target=" + target +
+                ", functionName='" + functionName + '\'' +
+                ", argList=" + argList +
+                ", argMap=" + argMap +
                 '}';
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        FunctionCall that = (FunctionCall) o;
-        return Objects.equals(target, that.target) && Objects.equals(function, that.function) && Objects.equals(arguments, that.arguments);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(target, function, arguments);
     }
 }

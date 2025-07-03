@@ -1,6 +1,8 @@
 package cn.encmys.ykdz.forest.hyphascript.node;
 
 import cn.encmys.ykdz.forest.hyphascript.context.Context;
+import cn.encmys.ykdz.forest.hyphascript.exception.EvaluateException;
+import cn.encmys.ykdz.forest.hyphascript.token.Token;
 import cn.encmys.ykdz.forest.hyphascript.value.Reference;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,7 +15,8 @@ public class Const extends ASTNode {
     private final ASTNode initValue;
     private final boolean isExported;
 
-    public Const(@NotNull String name, @NotNull ASTNode initValue, boolean isExported) {
+    public Const(@NotNull String name, @NotNull ASTNode initValue, boolean isExported, @NotNull Token startToken, @NotNull Token endToken) {
+        super(startToken, endToken);
         this.name = name;
         this.initValue = initValue;
         this.isExported = isExported;
@@ -23,8 +26,12 @@ public class Const extends ASTNode {
     public @NotNull Reference evaluate(@NotNull Context ctx) {
         Reference initRef = initValue.evaluate(ctx);
         initRef.setConst(true);
-        initRef.setExported(isExported);
-        ctx.declareReference(name, initRef);
+        try {
+            ctx.declareMember(name, initRef);
+            if (isExported) ctx.setExported(name);
+        } catch (Exception e) {
+            throw new EvaluateException(this, "Error declaring reference " + name + " in " + ctx, e);
+        }
         return new Reference();
     }
 

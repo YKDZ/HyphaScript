@@ -4,10 +4,11 @@ import cn.encmys.ykdz.forest.hyphascript.context.Context;
 import cn.encmys.ykdz.forest.hyphascript.exception.EvaluateException;
 import cn.encmys.ykdz.forest.hyphascript.exception.LexerException;
 import cn.encmys.ykdz.forest.hyphascript.exception.ParserException;
+import cn.encmys.ykdz.forest.hyphascript.lexer.Lexer;
 import cn.encmys.ykdz.forest.hyphascript.node.ASTNode;
-import cn.encmys.ykdz.forest.hyphascript.node.Block;
-import cn.encmys.ykdz.forest.hyphascript.parser.Lexer;
+import cn.encmys.ykdz.forest.hyphascript.parser.LexicalScope;
 import cn.encmys.ykdz.forest.hyphascript.parser.Parser;
+import cn.encmys.ykdz.forest.hyphascript.token.Token;
 import cn.encmys.ykdz.forest.hyphascript.value.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,90 +16,185 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Represents a script that can be parsed into an abstract syntax tree (AST)
+ * and evaluated within a given context. Maintains state to avoid redundant
+ * parsing and evaluation operations.
+ */
 public class Script {
-    @NotNull
-    private String script;
-    @NotNull
-    private List<ASTNode> nodes = new ArrayList<>();
-    @NotNull
-    private final Context context;
-    @Nullable
-    private ParserResult parserResult;
+    private final @NotNull String script;
+    private @NotNull List<ASTNode> nodes = new ArrayList<>();
+    private @Nullable ParserResult parserResult;
+    private @Nullable LexicalScope lexicalScope;
+    private @Nullable Context context;
     private boolean isParsed = false;
     private boolean isEvaluated = false;
 
-    public Script(@NotNull String script, @NotNull Context context) {
+    /**
+     * Constructs a Script instance with the specified script content and execution context.
+     *
+     * @param script the source code of the script
+     */
+    public Script(@NotNull String script) {
         this.script = script;
-        this.context = context;
     }
 
-    public ParserResult parse() {
-        if (isParsed) return new ParserResult(script, ParserResult.Type.PARSED, "", 0, 0);
+    /**
+     * Parses the script into an AST. Will only execute parsing once per script version,
+     * subsequent calls return cached result.
+     *
+     * @return parsing result with detailed status and metrics
+     */
+    public @NotNull ParserResult parse() {
+        long startTime = System.currentTimeMillis();
 
-        try {
-            Lexer lexer = new Lexer(script);
-            Parser parser = new Parser(lexer.tokenize());
-            nodes = parser.parse();
-
-            parserResult = new ParserResult(script, ParserResult.Type.SUCCESS, "", 0, 0);
-        } catch (LexerException e) {
-            parserResult = new ParserResult(script, ParserResult.Type.LEXER_ERROR, e.getMessage(), e.getLine(), e.getColumn());
-        } catch (ParserException e) {
-            parserResult = new ParserResult(script, ParserResult.Type.PARSER_ERROR, e.getMessage(), e.getToken().line(), e.getToken().column());
+        if (isParsed) {
+            return parserResult != null ? parserResult : new ParserResult(
+                    script,
+                    ParserResult.Type.PARSED,
+                    0,
+                    "Parser result not initialized",
+                    0,
+                    0
+            );
         }
 
+        try {
+            List<Token> tokens = new Lexer(script).tokenize();
+            Parser parser = new Parser(tokens);
+            nodes = parser.parse();
+            lexicalScope = parser.getParseContext().getLexicalScope();
+            handleParseSuccess(startTime);
+        } catch (LexerException e) {
+            handleLexerError(e, startTime);
+        } catch (ParserException e) {
+            handleParserError(e, startTime);
+        }
+
+        assert parserResult != null;
         return parserResult;
     }
 
     /**
-     * Evaluate the script with default context provided in the constructor
-     * @return Evaluated result
+     * Evaluates the script using a custom execution context.
+     *
+     * @param context context for variable resolution and function execution
+     * @return evaluation result with value and execution metrics
      */
-    @NotNull
-    public EvaluateResult evaluate() {
-        return evaluate(context);
-    }
+    public @NotNull EvaluateResult evaluate(@NotNull Context context) {
+        this.context = context;
 
-    /**
-     * Evaluate the script with given context
-     * @return Evaluated result
-     */
-    @NotNull
-    public EvaluateResult evaluate(@NotNull Context ctx) {
+        long startTime = System.currentTimeMillis();
+
         if (!isParsed) {
-            parse();
-            assert parserResult != null;
-            if (parserResult.resultType() != ParserResult.Type.SUCCESS) {
-                return new EvaluateResult(EvaluateResult.Type.PARSER_ERROR, script, new Value(), parserResult.errorMsg(), parserResult.errorLine(), parserResult.errorColumn());
+            ParserResult parseResult = parse();
+            if (parseResult.resultType() != ParserResult.Type.SUCCESS) {
+                return createEvaluationErrorFromParseResult(parseResult, startTime);
             }
         }
 
-        Value result = new Value();
-
         try {
-            result = (new Block(nodes)).evaluate(ctx).getReferedValue();
+            Value result = evaluateNodes(context);
             isEvaluated = true;
+            return createSuccessEvaluationResult(result, startTime);
         } catch (EvaluateException e) {
-            return new EvaluateResult(EvaluateResult.Type.EVALUATE_ERROR, script, result, e.getMessage(), 0, 0);
+            return createEvaluationErrorResult(e, startTime);
         }
+    }
 
-        return new EvaluateResult(EvaluateResult.Type.SUCCESS, script, result, "", 0, 0);
+    private void handleParseSuccess(long startTime) {
+        long duration = System.currentTimeMillis() - startTime;
+        parserResult = new ParserResult(
+                script,
+                ParserResult.Type.SUCCESS,
+                duration,
+                "Successfully parsed",
+                0,
+                0
+        );
+        isParsed = true;
+    }
+
+    private void handleLexerError(@NotNull LexerException e, long startTime) {
+        long duration = System.currentTimeMillis() - startTime;
+        parserResult = new ParserResult(
+                script,
+                ParserResult.Type.LEXER_ERROR,
+                duration,
+                e.getMessage(),
+                e.getLine(),
+                e.getColumn()
+        );
+    }
+
+    private void handleParserError(@NotNull ParserException e, long startTime) {
+        long duration = System.currentTimeMillis() - startTime;
+        parserResult = new ParserResult(
+                script,
+                ParserResult.Type.PARSER_ERROR,
+                duration,
+                e.getMessage(),
+                e.getToken().line(),
+                e.getToken().column()
+        );
+    }
+
+    private @NotNull Value evaluateNodes(@NotNull Context context) throws EvaluateException {
+        Value result = new Value();
+        for (ASTNode node : nodes) {
+            result = node.evaluate(context).getReferredValue();
+        }
+        return result;
+    }
+
+    private @NotNull EvaluateResult createSuccessEvaluationResult(Value result, long startTime) {
+        long duration = System.currentTimeMillis() - startTime;
+        return new EvaluateResult(
+                EvaluateResult.Type.SUCCESS,
+                script,
+                result,
+                duration,
+                "Evaluation successful",
+                null,
+                0, 0, 0, 0
+        );
+    }
+
+    private @NotNull EvaluateResult createEvaluationErrorResult(@NotNull EvaluateException e, long startTime) {
+        long duration = System.currentTimeMillis() - startTime;
+        return new EvaluateResult(
+                EvaluateResult.Type.EVALUATE_ERROR,
+                script,
+                new Value(),
+                duration,
+                e.getMessage(),
+                e.getCause(),
+                e.getNode().getStartToken().line(),
+                e.getNode().getStartToken().column(),
+                e.getNode().getEndToken().line(),
+                e.getNode().getEndToken().column()
+        );
+    }
+
+    private @NotNull EvaluateResult createEvaluationErrorFromParseResult(@NotNull ParserResult parseResult, long startTime) {
+        long duration = System.currentTimeMillis() - startTime;
+        return new EvaluateResult(
+                EvaluateResult.Type.PARSER_ERROR,
+                script,
+                new Value(),
+                duration,
+                parseResult.errorMsg(),
+                null,
+                parseResult.errorLine(),
+                parseResult.errorColumn(),
+                parseResult.errorLine(),
+                parseResult.errorColumn()
+        );
     }
 
     @NotNull
     public String getScript() {
         return script;
-    }
-
-    public void setScript(@NotNull String script) {
-        isParsed = false;
-        isEvaluated = false;
-        this.script = script;
-    }
-
-    @NotNull
-    public Context getContext() {
-        return context;
     }
 
     public boolean isEvaluated() {
@@ -109,14 +205,34 @@ public class Script {
         return isParsed;
     }
 
-    public @Nullable ParserResult getParserResult() {
+    @Nullable
+    public ParserResult getParserResult() {
         return parserResult;
+    }
+
+    public @Nullable LexicalScope getLexicalScope() {
+        return lexicalScope;
+    }
+
+    private void resetState() {
+        nodes.clear();
+        parserResult = null;
+        isParsed = false;
+        isEvaluated = false;
     }
 
     @Override
     public String toString() {
         return "Script{" +
                 "script='" + script + '\'' +
+                ", parsed=" + isParsed +
+                ", evaluated=" + isEvaluated +
                 '}';
+    }
+
+    public @NotNull Context getContext() {
+        if (!isEvaluated) throw new IllegalStateException("Evaluated script is not yet evaluated.");
+        assert context != null;
+        return context;
     }
 }

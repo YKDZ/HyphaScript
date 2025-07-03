@@ -4,6 +4,7 @@ import cn.encmys.ykdz.forest.hyphascript.context.Context;
 import cn.encmys.ykdz.forest.hyphascript.exception.BreakNotificationException;
 import cn.encmys.ykdz.forest.hyphascript.exception.ContinueNotificationException;
 import cn.encmys.ykdz.forest.hyphascript.exception.EvaluateException;
+import cn.encmys.ykdz.forest.hyphascript.token.Token;
 import cn.encmys.ykdz.forest.hyphascript.value.Reference;
 import cn.encmys.ykdz.forest.hyphascript.value.Value;
 import org.jetbrains.annotations.NotNull;
@@ -16,23 +17,23 @@ public class DoWhileLoop extends ASTNode {
     @NotNull
     private final ASTNode body;
 
-    public DoWhileLoop(@NotNull ASTNode body, @NotNull ASTNode condition) {
+    public DoWhileLoop(@NotNull ASTNode body, @NotNull ASTNode condition, @NotNull Token startToken, @NotNull Token endToken) {
+        super(startToken, endToken);
         this.condition = condition;
         this.body = body;
     }
 
     @Override
     public @NotNull Reference evaluate(@NotNull Context ctx) {
-        Context localContext = new Context(Context.Type.LOOP, ctx);
+        Context localContext = new Context(ctx);
         do {
             try {
                 body.evaluate(localContext);
-            }
-            catch (BreakNotificationException ignored) {
+            } catch (BreakNotificationException ignored) {
                 break;
             } catch (ContinueNotificationException ignored) {
             }
-            Value conditionResult = condition.evaluate(localContext).getReferedValue();
+            Value conditionResult = condition.evaluate(localContext).getReferredValue();
             if (!conditionResult.isType(Value.Type.BOOLEAN, Value.Type.NULL)) {
                 throw new EvaluateException(this, "Result of while condition must be boolean.");
             }

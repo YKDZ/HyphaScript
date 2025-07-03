@@ -23,6 +23,20 @@ public class EvaluateException extends RuntimeException {
         this.cause = cause;
     }
 
+    public @NotNull ASTNode getNode() {
+        return node;
+    }
+
+    @Override
+    public @NotNull String getMessage() {
+        return message;
+    }
+
+    @Override
+    public @Nullable Throwable getCause() {
+        return cause;
+    }
+
     @Override
     public String toString() {
         return "EvaluateException{" +

@@ -4,24 +4,24 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.invoke.*;
-import java.lang.reflect.*;
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
 import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandleInfo;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class ReflectionUtils {
     private static final MethodHandles.Lookup LOOKUP = MethodHandles.lookup();
 
     /**
      * 根据包名字符串解析出类名
+     *
      * @param fullPath 包名，如 java.lang.String
      * @return 类名，如 String
      */
@@ -81,7 +81,7 @@ public class ReflectionUtils {
                 } else {
                     Class<?> argType = arg.getClass();
                     if (argType == BigDecimal.class) {
-                        if (!isNumericType(paramType)) {
+                        if (isNotNumericType(paramType)) {
                             isCompatible = false;
                             break;
                         }
@@ -132,7 +132,7 @@ public class ReflectionUtils {
                 } else {
                     Class<?> argType = arg.getClass();
                     if (argType == BigDecimal.class) {
-                        if (!isNumericType(paramType)) {
+                        if (isNotNumericType(paramType)) {
                             isCompatible = false;
                             break;
                         }
@@ -170,13 +170,13 @@ public class ReflectionUtils {
         return null;
     }
 
-    private static boolean isNumericType(@NotNull Class<?> type) {
-        return type == byte.class || type == Byte.class ||
-                type == short.class || type == Short.class ||
-                type == int.class || type == Integer.class ||
-                type == long.class || type == Long.class ||
-                type == float.class || type == Float.class ||
-                type == double.class || type == Double.class;
+    private static boolean isNotNumericType(@NotNull Class<?> type) {
+        return type != byte.class && type != Byte.class &&
+                type != short.class && type != Short.class &&
+                type != int.class && type != Integer.class &&
+                type != long.class && type != Long.class &&
+                type != float.class && type != Float.class &&
+                type != double.class && type != Double.class;
     }
 
     public static Object invokeMethodHandle(@NotNull MethodHandle methodHandle, @NotNull Object[] arguments) throws Throwable {

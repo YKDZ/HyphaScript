@@ -1,6 +1,6 @@
 package cn.encmys.ykdz.forest.hyphascript.exception;
 
-import cn.encmys.ykdz.forest.hyphascript.parser.token.Token;
+import cn.encmys.ykdz.forest.hyphascript.token.Token;
 import org.jetbrains.annotations.NotNull;
 
 public class ParserException extends RuntimeException {

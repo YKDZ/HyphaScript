@@ -1,6 +1,7 @@
 package cn.encmys.ykdz.forest.hyphascript.node;
 
 import cn.encmys.ykdz.forest.hyphascript.context.Context;
+import cn.encmys.ykdz.forest.hyphascript.token.Token;
 import cn.encmys.ykdz.forest.hyphascript.value.Reference;
 import cn.encmys.ykdz.forest.hyphascript.value.Value;
 import org.jetbrains.annotations.NotNull;
@@ -12,11 +13,13 @@ public class Literal extends ASTNode {
     private final Reference value;
 
     public Literal() {
+        super(new Token(Token.Type.NULL, "", 0, 0), new Token(Token.Type.NULL, "", 0, 0));
         this.value = new Reference();
     }
 
     public Literal(@NotNull Value value) {
-        this.value = new Reference(null, value);
+        super(new Token(Token.Type.NULL, "", 0, 0), new Token(Token.Type.NULL, "", 0, 0));
+        this.value = new Reference(value);
     }
 
     @Override
