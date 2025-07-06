@@ -26,15 +26,6 @@ java {
     withJavadocJar()
 }
 
-tasks.processResources {
-    val props = mapOf("version" to version)
-    inputs.properties(props)
-    filteringCharset = "UTF-8"
-    filesMatching("*plugin.yml") {
-        expand(props)
-    }
-}
-
 tasks.withType<JavaCompile> {
     options.encoding = "UTF-8"
     options.release.set(21)
@@ -51,7 +42,7 @@ publishing {
             pom {
                 name.set(rootProject.name)
                 description.set("Script Engine for Forest MC plugin series.")
-                url.set("https://github.com/YKDZ") // 项目主页
+                url.set("https://github.com/YKDZ")
                 licenses {
                     license {
                         name.set("MIT License")
