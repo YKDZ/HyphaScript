@@ -26,109 +26,57 @@ public class InternalObjectManager {
     public static final @NotNull ScriptObject ARRAY;
     public static final @NotNull ScriptObject ARRAY_PROTOTYPE;
     public static final @NotNull ScriptObject NUMBER;
-    public static final @NotNull ScriptObject RANDOM;
-    public static final @NotNull ScriptObject MATH;
     public static final @NotNull ScriptObject NUMBER_PROTOTYPE;
     public static final @NotNull ScriptObject FUTURE;
+    public static final @NotNull ScriptObject RANDOM;
+    public static final @NotNull ScriptObject MATH;
 
-    private static final @NotNull Map<String, ScriptObject> objects = new HashMap<>();
+    private static final @NotNull Map<@NotNull String, @NotNull ScriptObject> objects = new HashMap<>();
 
     static {
-        OBJECT = registerObject(new ObjectObject());
-        OBJECT_PROTOTYPE = OBJECT.findMember("prototype").getReferredValue().getAsScriptObject();
-        FUNCTION = registerObject(new FunctionObject());
-        FUNCTION_PROTOTYPE = FUNCTION.findMember("prototype").getReferredValue().getAsScriptObject();
-        ARRAY = registerObject(new ArrayObject());
-        ARRAY_PROTOTYPE = ARRAY.findMember("prototype").getReferredValue().getAsScriptObject();
-        FUTURE = registerObject(new FutureObject());
-        NUMBER = registerObject(new NumberObject());
-        NUMBER_PROTOTYPE = NUMBER.findMember("prototype").getReferredValue().getAsScriptObject();
-        RANDOM = registerObject(new RandomObject());
-        MATH = registerObject(new MathObject());
+        OBJECT = registerWithPrototype("Object", new ObjectObject());
+        OBJECT_PROTOTYPE = getPrototype(OBJECT);
 
-        // 注册无需调用即可使用的全局对象
-        Context.GLOBAL_OBJECT.declareMember("Object", new Reference(new Value(OBJECT), true));
-        Context.GLOBAL_OBJECT.declareMember("Function", new Reference(new Value(FUNCTION), true));
-        Context.GLOBAL_OBJECT.declareMember("Array", new Reference(new Value(ARRAY), true));
-        Context.GLOBAL_OBJECT.declareMember("Future", new Reference(new Value(FUTURE), true));
-        Context.GLOBAL_OBJECT.declareMember("Number", new Reference(new Value(NUMBER), true));
-        Context.GLOBAL_OBJECT.declareMember("Random", new Reference(new Value(RANDOM), true));
-        Context.GLOBAL_OBJECT.declareMember("Math", new Reference(new Value(MATH), true));
+        FUNCTION = registerWithPrototype("Function", new FunctionObject());
+        FUNCTION_PROTOTYPE = getPrototype(FUNCTION);
+
+        ARRAY = registerWithPrototype("Array", new ArrayObject());
+        ARRAY_PROTOTYPE = getPrototype(ARRAY);
+
+        NUMBER = registerWithPrototype("Number", new NumberObject());
+        NUMBER_PROTOTYPE = getPrototype(NUMBER);
+
+        FUTURE = register("Future", new FutureObject());
+        RANDOM = register("Random", new RandomObject());
+        MATH = register("Math", new MathObject());
+
+        objects.forEach((key, value) -> Context.GLOBAL_OBJECT.declareMember(
+                key, new Reference(new Value(value), true)
+        ));
     }
 
     private InternalObjectManager() {
     }
 
-    public static @NotNull ScriptObject registerObject(@NotNull InternalObject object) {
-        return registerObject(object, OBJECT_PROTOTYPE);
+    public static @NotNull ScriptObject register(@NotNull String name, @NotNull InternalObject obj) {
+        ScriptObject so = obj.getAsScriptObject();
+        objects.put(name, so);
+        return so;
     }
 
-    public static @NotNull ScriptObject registerObject(@NotNull InternalObject object, @NotNull ScriptObject __proto__) {
-        ObjectName nameAnno = object.getClass().getAnnotation(ObjectName.class);
-        if (nameAnno == null)
-            throw new IllegalArgumentException("Internal object class must have ObjectName annotation.");
+    private static @NotNull ScriptObject registerWithPrototype(@NotNull String name, @NotNull InternalObject obj) {
+        return register(name, obj);
+    }
 
-        String name = nameAnno.value();
-
-        ScriptObject objectPrototype = new ScriptObject(__proto__);
-
-        Arrays.stream(object.getClass().getDeclaredMethods())
-                .filter(method -> method.getDeclaredAnnotation(Function.class) != null)
-                .forEach(method -> {
-                    if (!Modifier.isStatic(method.getModifiers()) || !Modifier.isPublic(method.getModifiers())) {
-                        throw new IllegalArgumentException("Internal object method must be public static.");
-                    }
-
-                    Function functionAnnotation = method.getDeclaredAnnotation(Function.class);
-                    String functionName = functionAnnotation.value().isEmpty() ? method.getName() : functionAnnotation.value();
-
-                    FunctionParas parasAnnotation = method.getDeclaredAnnotation(FunctionParas.class);
-
-                    LinkedHashMap<String, ASTNode> parameters = new LinkedHashMap<>();
-                    if (parasAnnotation != null) {
-                        for (String s : parasAnnotation.value()) {
-                            parameters.put(s, new Literal(new Value(null)));
-                        }
-                    }
-
-                    FunctionUncertainPara uncertainParaAnno = method.getDeclaredAnnotation(FunctionUncertainPara.class);
-                    String uncertainParameter = uncertainParaAnno != null && uncertainParaAnno.value().isEmpty() ? uncertainParaAnno.value() : "";
-
-                    boolean isStatic = method.isAnnotationPresent(Static.class);
-
-                    InternalObjectFunction func;
-
-                    try {
-                        func = new InternalObjectFunction(functionName, parameters, uncertainParameter, ReflectionUtils.getMethodHandle(method));
-                    } catch (IllegalAccessException e) {
-                        throw new RuntimeException(e);
-                    }
-
-                    if (isStatic) {
-                        if (object.hasLocalMember(functionName))
-                            throw new RuntimeException("Internal object already has function with the same name: \"" + functionName + "\"");
-                        object.declareMember(functionName, new Reference(new Value(func), true));
-                        object.setExported(functionName);
-                    } else {
-                        if (objectPrototype.hasLocalMember(functionName))
-                            throw new RuntimeException("Internal object already has function with the same name: \"" + functionName + "\"");
-                        objectPrototype.declareMember(functionName, new Reference(new Value(func), true));
-                        objectPrototype.setExported(functionName);
-                    }
-                });
-
-        object.declareMember("prototype", new Value(objectPrototype));
-
-        objects.put(name, object);
-
-        return object;
+    private static @NotNull ScriptObject getPrototype(@NotNull ScriptObject object) {
+        return object.findMember("prototype").getReferredValue().getAsScriptObject();
     }
 
     public static boolean hasObject(@NotNull String name) {
         return objects.containsKey(name);
     }
 
-    public static ScriptObject getObject(@NotNull String name) {
+    public static @NotNull ScriptObject getObject(@NotNull String name) {
         return objects.get(name);
     }
 }

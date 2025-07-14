@@ -42,11 +42,11 @@ public class Assignment extends ASTNode {
 
         return switch (operator) {
             case EQUALS -> {
-                setValueOfRef(targetRef, valueRef.getReferredValue());
+                setValueOfRef(ctx, targetRef, valueRef.getReferredValue());
                 yield new Reference();
             }
             case COLON_EQUALS -> {
-                setValueOfRef(targetRef, valueRef.getReferredValue());
+                setValueOfRef(ctx, targetRef, valueRef.getReferredValue());
                 yield valueRef;
             }
             case PLUS_EQUALS -> {
@@ -55,7 +55,7 @@ public class Assignment extends ASTNode {
                     final String targetString = targetRef.getReferredValue().getAsString();
                     // 视作 String
                     final String valueString = valueRef.getReferredValue().toString();
-                    setValueOfValue(targetRef.getReferredValue(), targetString.concat(valueString));
+                    setValueOfValue(ctx, targetRef.getReferredValue(), targetString.concat(valueString));
                     yield new Reference();
                 } else if (targetRef.getReferredValue().isType(Value.Type.ARRAY)) {
                     final Reference[] leftArray = targetRef.getReferredValue().getAsArray();
@@ -65,7 +65,7 @@ public class Assignment extends ASTNode {
                         targetRef.setReferredValue(new Value(
                                 Stream.concat(Arrays.stream(leftArray), Arrays.stream(rightArray))
                                         .toArray(Reference[]::new)
-                        ));
+                        ), ctx.getConfig().runtimeTypeCheck());
                     }
                     // 数组 + 引用
                     else {
@@ -73,7 +73,7 @@ public class Assignment extends ASTNode {
                                 Stream.concat(
                                         Stream.of(leftArray).map(Reference::clone),
                                         Stream.of(valueRef.clone())
-                                )));
+                                )), ctx.getConfig().runtimeTypeCheck());
                     }
                     yield new Reference();
                 }
@@ -81,7 +81,7 @@ public class Assignment extends ASTNode {
                     throw new EvaluateException(this, "Unsupported value type for operator");
                 final BigDecimal targetDecimal = targetRef.getReferredValue().getAsBigDecimal();
                 final BigDecimal valueDecimal = valueRef.getReferredValue().getAsBigDecimal();
-                setValueOfValue(targetRef.getReferredValue(), targetDecimal.add(valueDecimal));
+                setValueOfValue(ctx, targetRef.getReferredValue(), targetDecimal.add(valueDecimal));
                 yield new Reference();
             }
             case MINUS_EQUALS -> {
@@ -89,7 +89,7 @@ public class Assignment extends ASTNode {
                     throw new EvaluateException(this, "Unsupported value type for operator");
                 final BigDecimal targetDecimal = targetRef.getReferredValue().getAsBigDecimal();
                 final BigDecimal valueDecimal = valueRef.getReferredValue().getAsBigDecimal();
-                setValueOfValue(targetRef.getReferredValue(), targetDecimal.subtract(valueDecimal));
+                setValueOfValue(ctx, targetRef.getReferredValue(), targetDecimal.subtract(valueDecimal));
                 yield new Reference();
             }
             case MUL_EQUALS -> {
@@ -97,7 +97,7 @@ public class Assignment extends ASTNode {
                     throw new EvaluateException(this, "Unsupported value type for operator");
                 final BigDecimal targetDecimal = targetRef.getReferredValue().getAsBigDecimal();
                 final BigDecimal valueDecimal = valueRef.getReferredValue().getAsBigDecimal();
-                setValueOfValue(targetRef.getReferredValue(), targetDecimal.multiply(valueDecimal));
+                setValueOfValue(ctx, targetRef.getReferredValue(), targetDecimal.multiply(valueDecimal));
                 yield new Reference();
             }
             case DIV_EQUALS -> {
@@ -105,7 +105,7 @@ public class Assignment extends ASTNode {
                     throw new EvaluateException(this, "Unsupported value type for operator");
                 final BigDecimal targetDecimal = targetRef.getReferredValue().getAsBigDecimal();
                 final BigDecimal valueDecimal = valueRef.getReferredValue().getAsBigDecimal();
-                setValueOfValue(targetRef.getReferredValue(), targetDecimal.divide(valueDecimal, RoundingMode.HALF_UP));
+                setValueOfValue(ctx, targetRef.getReferredValue(), targetDecimal.divide(valueDecimal, RoundingMode.HALF_UP));
                 yield new Reference();
             }
             case MOD_EQUALS -> {
@@ -113,7 +113,7 @@ public class Assignment extends ASTNode {
                     throw new EvaluateException(this, "Unsupported value type for operator");
                 final BigDecimal targetDecimal = targetRef.getReferredValue().getAsBigDecimal();
                 final BigDecimal valueDecimal = valueRef.getReferredValue().getAsBigDecimal();
-                setValueOfValue(targetRef.getReferredValue(), targetDecimal.remainder(valueDecimal));
+                setValueOfValue(ctx, targetRef.getReferredValue(), targetDecimal.remainder(valueDecimal));
                 yield new Reference();
             }
             case POWER_EQUALS -> {
@@ -121,24 +121,24 @@ public class Assignment extends ASTNode {
                     throw new EvaluateException(this, "Unsupported value type for operator");
                 final BigDecimal targetDecimal = targetRef.getReferredValue().getAsBigDecimal();
                 final BigDecimal valueDecimal = valueRef.getReferredValue().getAsBigDecimal();
-                setValueOfValue(targetRef.getReferredValue(), targetDecimal.pow(valueDecimal.intValue()));
+                setValueOfValue(ctx, targetRef.getReferredValue(), targetDecimal.pow(valueDecimal.intValue()));
                 yield new Reference();
             }
             default -> throw new EvaluateException(this, "Unsupported operator");
         };
     }
 
-    private void setValueOfRef(@NotNull Reference ref, @NotNull Value value) {
+    private void setValueOfRef(@NotNull Context ctx, @NotNull Reference ref, @NotNull Value value) {
         try {
-            ref.setReferredValue(value);
+            ref.setReferredValue(value, ctx.getConfig().runtimeTypeCheck());
         } catch (ReferenceException e) {
             throw new EvaluateException(this, e.getMessage(), e);
         }
     }
 
-    private void setValueOfValue(@NotNull Value value, @Nullable Object newValue) {
+    private void setValueOfValue(@NotNull Context ctx, @NotNull Value value, @Nullable Object newValue) {
         try {
-            value.setValue(newValue);
+            value.setValue(newValue, ctx.getConfig().runtimeTypeCheck());
         } catch (ValueException e) {
             throw new EvaluateException(this, e.getMessage(), e);
         }

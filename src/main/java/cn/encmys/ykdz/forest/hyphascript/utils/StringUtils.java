@@ -68,4 +68,25 @@ public class StringUtils {
                 .append("{...}")
                 .append("]");
     }
+
+    public static @NotNull String formatStackTrace(@NotNull Throwable throwable) {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append(throwable).append("\n");
+
+        for (StackTraceElement element : throwable.getStackTrace()) {
+            sb.append("\tat ").append(element.toString()).append("\n");
+        }
+
+        Throwable cause = throwable.getCause();
+        while (cause != null) {
+            sb.append("Caused by: ").append(cause).append("\n");
+            for (StackTraceElement element : cause.getStackTrace()) {
+                sb.append("\tat ").append(element.toString()).append("\n");
+            }
+            cause = cause.getCause();
+        }
+
+        return sb.toString();
+    }
 }

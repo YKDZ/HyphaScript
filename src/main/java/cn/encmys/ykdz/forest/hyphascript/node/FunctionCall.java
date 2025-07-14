@@ -65,7 +65,7 @@ public class FunctionCall extends ASTNode {
                 yield callFunction(targetValue, function, ctx);
             }
             case FUNCTION -> {
-                Function function = functionValue.getAsFunction();
+                final Function function = functionValue.getAsFunction();
                 yield callFunction(targetValue, function, ctx);
             }
             case JAVA_METHOD_HANDLES -> {
@@ -112,7 +112,7 @@ public class FunctionCall extends ASTNode {
     }
 
     private @NotNull Reference callFunctionWithParaMap(@NotNull Value target, @NotNull Function function, @NotNull Map<String, ASTNode> paras, @NotNull Context ctx) {
-        Map<String, Value> evaluatedArgs = paras.entrySet().stream()
+        final Map<String, Value> evaluatedArgs = paras.entrySet().stream()
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,
                         entry -> entry.getValue().evaluate(ctx).getReferredValue()

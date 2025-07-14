@@ -13,11 +13,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.invoke.MethodHandle;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Consumer;
+
+import static cn.encmys.ykdz.forest.hyphascript.utils.StringUtils.formatStackTrace;
 
 public class InternalObjectFunction extends ScriptObject implements Function {
     private @NotNull String name;
@@ -78,7 +77,7 @@ public class InternalObjectFunction extends ScriptObject implements Function {
         } catch (Throwable e) {
             throw new FunctionException(
                     this,
-                    "Error when call internal object function \"" + name + "\": " + e.getMessage(),
+                    "Error when call internal object function \"" + name + "\"\n" + formatStackTrace(e),
                     e
             );
         }

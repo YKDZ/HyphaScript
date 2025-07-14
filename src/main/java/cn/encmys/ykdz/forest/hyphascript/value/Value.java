@@ -32,16 +32,16 @@ public class Value {
     }
 
     /**
-     * Construct a value with given isConst
+     * Construct a value
      * <p>
      * The type of value will be inferred automatically
      *
      * @param value Value of value
-     * @see #setValue(Object)
+     * @see #setValue(Object, boolean)
      */
     public Value(@Nullable Object value) {
         this.type = calType(value);
-        setValue(this.type, value);
+        setValue(this.type, value, false);
     }
 
     public Value(@NotNull Type type, @NotNull Object value) {
@@ -86,13 +86,13 @@ public class Value {
         return value;
     }
 
-    public void setValue(@Nullable Object value) {
+    public void setValue(@Nullable Object value, boolean typeCheck) {
         final Type newType = calType(value);
-        setValue(newType, value);
+        setValue(newType, value, typeCheck);
     }
 
-    private void setValue(@NotNull Type type, @Nullable Object value) {
-        if (this.type != type)
+    private void setValue(@NotNull Type type, @Nullable Object value, boolean typeCheck) {
+        if (typeCheck && this.type != type)
             throw new ValueException(this, "Type error. New type is " + type + " but old type is " + this.type);
 
         if (value != null && type == Type.ARRAY && value.getClass().getComponentType() != Reference.class) {

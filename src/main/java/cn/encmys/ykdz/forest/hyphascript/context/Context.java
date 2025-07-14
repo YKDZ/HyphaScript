@@ -21,7 +21,7 @@ public class Context extends ScriptObject implements Cloneable {
     public final static Context GLOBAL_OBJECT = new Context(InternalObjectManager.OBJECT_PROTOTYPE);
 
     private @NotNull List<@NotNull String> importedJavaClasses = new ArrayList<>();
-    private @NotNull Config config = new Config(RoundingMode.HALF_UP, RoundingMode.HALF_UP);
+    private @NotNull Config config = new Config(RoundingMode.HALF_UP, RoundingMode.HALF_UP, false);
 
     /**
      * Construct a new context with GLOBAL_OBJECT as parent.
@@ -66,7 +66,7 @@ public class Context extends ScriptObject implements Cloneable {
         cloned.members.putAll(this.members);
         cloned.__proto__ = this.__proto__;
         cloned.importedJavaClasses = this.importedJavaClasses;
-        cloned.config = new Config(this.config.divRoundingMode, this.config.equalRoundingMode);
+        cloned.config = new Config(this.config.divRoundingMode, this.config.equalRoundingMode, this.config.runtimeTypeCheck);
         return cloned;
     }
 
@@ -77,7 +77,8 @@ public class Context extends ScriptObject implements Cloneable {
     }
 
     public record Config(@NotNull RoundingMode divRoundingMode,
-                         @NotNull RoundingMode equalRoundingMode) {
+                         @NotNull RoundingMode equalRoundingMode,
+                         boolean runtimeTypeCheck) {
     }
 
     public static class Builder {

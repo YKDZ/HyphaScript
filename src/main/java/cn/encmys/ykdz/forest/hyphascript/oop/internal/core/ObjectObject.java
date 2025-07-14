@@ -13,10 +13,6 @@ import java.util.stream.Collectors;
 
 @ObjectName("Object")
 public class ObjectObject extends InternalObject {
-    public ObjectObject() {
-        super(null);
-    }
-
     @Static
     @Function("create")
     @FunctionParas({"object"})
