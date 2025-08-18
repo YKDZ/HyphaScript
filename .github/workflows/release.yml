@@ -1,0 +1,60 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ github.ref_name }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x ./gradlew
+
+      - name: Build shadowJar
+        run: ./gradlew clean shadowJar -Pversion=${VERSION#v}
+
+      - name: Extract changelog for current version
+        id: changelog
+        run: |
+          VERSION=${VERSION#v}
+          echo "Extracting changelog for $VERSION"
+          awk -v ver="## $VERSION " '
+            $0 ~ ver {flag=1; next}
+            /^## / && flag {exit}
+            flag {print}
+          ' CHANGELOG.md > RELEASE_CHANGELOG.md
+
+          echo "body<<EOF" >> $GITHUB_OUTPUT
+          cat RELEASE_CHANGELOG.md >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
+          body: ${{ steps.changelog.outputs.body }}
+          files: build/libs/HyphaUtils-*.jar
+
+      - name: Publish to GitHub Packages
+        run: ./gradlew publish -Pversion=${VERSION#v}
+        env:
+          GPR_USER: ${{ github.actor }}
+          GPR_KEY: ${{ secrets.GPR_KEY }}

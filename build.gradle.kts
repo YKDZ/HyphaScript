@@ -1,3 +1,5 @@
+import java.util.Locale
+
 plugins {
     `java-library`
     id("java")
@@ -32,35 +34,23 @@ tasks.withType<JavaCompile> {
 }
 
 publishing {
-    publications {
-        create<MavenPublication>("mavenJava") {
-            from(components["java"])
-            groupId = "cn.encmys"
-            artifactId = rootProject.name
-            version = rootProject.version.toString()
-
-            pom {
-                name.set(rootProject.name)
-                description.set("Script Engine for Forest MC plugin series.")
-                url.set("https://github.com/YKDZ")
-                licenses {
-                    license {
-                        name.set("MIT License")
-                        url.set("https://opensource.org/licenses/MIT")
-                    }
-                }
-                developers {
-                    developer {
-                        id.set("ykdz")
-                        name.set("YKDZ")
-                        email.set("3070799584@qq.com")
-                    }
-                }
+    repositories {
+        mavenLocal()
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/ykdz/HyphaScript")
+            credentials {
+                username = project.findProperty("gpr.user") as String? ?: System.getenv("GPR_USER")
+                password = project.findProperty("gpr.key") as String? ?: System.getenv("GPR_KEY")
             }
         }
     }
-
-    repositories {
-        mavenLocal()
+    publications {
+        register<MavenPublication>("gpr") {
+            from(components["java"])
+            groupId = group as String
+            artifactId = rootProject.name.lowercase(Locale.getDefault())
+            version = version.lowercase(Locale.getDefault())
+        }
     }
 }
