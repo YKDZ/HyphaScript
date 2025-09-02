@@ -15,7 +15,7 @@ repositories {
 }
 
 dependencies {
-    annotationProcessor("org.jetbrains:annotations:26.0.1")
+    annotationProcessor("org.jetbrains:annotations:26.0.2-1")
     compileOnly("net.kyori:adventure-api:4.22.0")
     compileOnly("net.kyori:adventure-text-minimessage:4.22.0")
     testImplementation("net.kyori:adventure-api:4.22.0")
