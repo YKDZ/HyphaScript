@@ -55,7 +55,8 @@ public class Script {
                     0,
                     "Parser result not initialized",
                     0,
-                    0
+                    0,
+                    null
             );
         }
 
@@ -68,6 +69,7 @@ public class Script {
         } catch (LexerException e) {
             handleLexerError(e, startTime);
         } catch (ParserException e) {
+            e.printStackTrace();
             handleParserError(e, startTime);
         }
 
@@ -110,7 +112,8 @@ public class Script {
                 duration,
                 "Successfully parsed",
                 0,
-                0
+                0,
+                null
         );
         isParsed = true;
     }
@@ -123,7 +126,8 @@ public class Script {
                 duration,
                 e.getMessage(),
                 e.getLine(),
-                e.getColumn()
+                e.getColumn(),
+                e
         );
     }
 
@@ -135,7 +139,8 @@ public class Script {
                 duration,
                 e.getMessage(),
                 e.getToken().line(),
-                e.getToken().column()
+                e.getToken().column(),
+                e
         );
     }
 

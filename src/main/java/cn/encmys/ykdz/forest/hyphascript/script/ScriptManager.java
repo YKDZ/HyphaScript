@@ -1,6 +1,7 @@
 package cn.encmys.ykdz.forest.hyphascript.script;
 
 import cn.encmys.ykdz.forest.hyphascript.context.Context;
+import cn.encmys.ykdz.forest.hyphascript.oop.internal.InternalObjectManager;
 import cn.encmys.ykdz.forest.hyphascript.utils.FileUtils;
 import cn.encmys.ykdz.forest.hyphascript.value.Value;
 import org.jetbrains.annotations.NotNull;
@@ -10,7 +11,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -125,11 +125,11 @@ public class ScriptManager {
                 registeredScript.getContext().getExportedMembers().forEach((name, reference) -> {
                     if (name.equals("Config")) return;
                     memberGlobalScriptImported.get(namespace).add(name);
-                    Context.GLOBAL_OBJECT.declareMember(name, reference.getReferredValue());
+                    InternalObjectManager.OBJECT_PROTOTYPE.declareMember(name, reference.getReferredValue());
                 });
             } else {
                 memberGlobalScriptImported.get(namespace).add(namespace);
-                Context.GLOBAL_OBJECT.declareMember(namespace, new Value(registeredScript.getContext().getExportedMembers()));
+                InternalObjectManager.OBJECT_PROTOTYPE.declareMember(namespace, new Value(registeredScript.getContext().getExportedMembers()));
             }
         }
     }
@@ -143,7 +143,7 @@ public class ScriptManager {
     public static void unloadScript(@NotNull String namespace) {
         final List<String> members = memberGlobalScriptImported.get(namespace);
         if (members == null) return;
-        members.forEach(Context.GLOBAL_OBJECT::deleteMember);
+        members.forEach(InternalObjectManager.OBJECT_PROTOTYPE::deleteMember);
         ScriptManager.removeScript(namespace);
         memberGlobalScriptImported.remove(namespace);
     }

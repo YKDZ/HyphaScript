@@ -3,6 +3,7 @@ package cn.encmys.ykdz.forest.hyphascript.node;
 import cn.encmys.ykdz.forest.hyphascript.context.Context;
 import cn.encmys.ykdz.forest.hyphascript.exception.EvaluateException;
 import cn.encmys.ykdz.forest.hyphascript.function.Function;
+import cn.encmys.ykdz.forest.hyphascript.oop.internal.InternalObjectManager;
 import cn.encmys.ykdz.forest.hyphascript.token.Token;
 import cn.encmys.ykdz.forest.hyphascript.utils.ReflectionUtils;
 import cn.encmys.ykdz.forest.hyphascript.value.Reference;
@@ -40,7 +41,7 @@ public class FunctionCall extends ASTNode {
     @Override
     public @NotNull Reference evaluate(@NotNull Context ctx) {
         Value functionValue;
-        Value targetValue = new Value(Context.GLOBAL_OBJECT);
+        Value targetValue = new Value(InternalObjectManager.OBJECT_PROTOTYPE);
 
         // 若 functionName 为空
         // 则代表 target 本身返回的就是 function

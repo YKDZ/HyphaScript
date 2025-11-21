@@ -1,24 +1,23 @@
 package cn.encmys.ykdz.forest.hyphascript.oop.internal;
 
-import cn.encmys.ykdz.forest.hyphascript.annotions.*;
 import cn.encmys.ykdz.forest.hyphascript.context.Context;
-import cn.encmys.ykdz.forest.hyphascript.function.InternalObjectFunction;
-import cn.encmys.ykdz.forest.hyphascript.node.ASTNode;
-import cn.encmys.ykdz.forest.hyphascript.node.Literal;
 import cn.encmys.ykdz.forest.hyphascript.oop.ScriptObject;
 import cn.encmys.ykdz.forest.hyphascript.oop.internal.core.*;
-import cn.encmys.ykdz.forest.hyphascript.utils.ReflectionUtils;
 import cn.encmys.ykdz.forest.hyphascript.value.Reference;
 import cn.encmys.ykdz.forest.hyphascript.value.Value;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.reflect.Modifier;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class InternalObjectManager {
+    /**
+     * Global object used to register some common utils function
+     * or variable to the script.
+     */
+    @NotNull
+    public final static Context GLOBAL_OBJECT = new Context(InternalObjectManager.OBJECT_PROTOTYPE);
+
     public static final @NotNull ScriptObject OBJECT;
     public static final @NotNull ScriptObject OBJECT_PROTOTYPE;
     public static final @NotNull ScriptObject FUNCTION;
@@ -50,7 +49,7 @@ public class InternalObjectManager {
         RANDOM = register("Random", new RandomObject());
         MATH = register("Math", new MathObject());
 
-        objects.forEach((key, value) -> Context.GLOBAL_OBJECT.declareMember(
+        objects.forEach((key, value) -> GLOBAL_OBJECT.declareMember(
                 key, new Reference(new Value(value), true)
         ));
     }

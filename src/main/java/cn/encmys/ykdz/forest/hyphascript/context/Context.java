@@ -13,23 +13,16 @@ import java.util.Collections;
 import java.util.List;
 
 public class Context extends ScriptObject implements Cloneable {
-    /**
-     * Global object used to register some common utils function
-     * or variable to the script.
-     */
-    @NotNull
-    public final static Context GLOBAL_OBJECT = new Context(InternalObjectManager.OBJECT_PROTOTYPE);
-
     private @NotNull List<@NotNull String> importedJavaClasses = new ArrayList<>();
     private @NotNull Config config = new Config(RoundingMode.HALF_UP, RoundingMode.HALF_UP, false);
 
     /**
      * Construct a new context with GLOBAL_OBJECT as parent.
      *
-     * @see #GLOBAL_OBJECT
+     * @see InternalObjectManager#GLOBAL_OBJECT
      */
     public Context() {
-        this(GLOBAL_OBJECT);
+        this(InternalObjectManager.OBJECT_PROTOTYPE);
     }
 
     public Context(@Nullable ScriptObject parent) {
@@ -96,7 +89,7 @@ public class Context extends ScriptObject implements Cloneable {
          * Create a context builder. The parent of this context will be GLOBAL_OBJECT
          *
          * @return Builder
-         * @see #GLOBAL_OBJECT
+         * @see InternalObjectManager#GLOBAL_OBJECT
          */
         @Contract(" -> new")
         public static @NotNull Builder create() {

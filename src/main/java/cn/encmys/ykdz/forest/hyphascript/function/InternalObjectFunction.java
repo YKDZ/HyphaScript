@@ -13,7 +13,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.invoke.MethodHandle;
-import java.util.*;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 import static cn.encmys.ykdz.forest.hyphascript.utils.StringUtils.formatStackTrace;
@@ -95,7 +98,7 @@ public class InternalObjectFunction extends ScriptObject implements Function {
 
     @Override
     public @NotNull Context getCapturedContext() {
-        return Context.GLOBAL_OBJECT;
+        return (Context) InternalObjectManager.OBJECT_PROTOTYPE;
     }
 
     @Override

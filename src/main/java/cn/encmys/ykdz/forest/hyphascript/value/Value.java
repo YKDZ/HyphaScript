@@ -3,13 +3,13 @@ package cn.encmys.ykdz.forest.hyphascript.value;
 import cn.encmys.ykdz.forest.hyphascript.exception.ValueException;
 import cn.encmys.ykdz.forest.hyphascript.function.Function;
 import cn.encmys.ykdz.forest.hyphascript.oop.ScriptObject;
-import cn.encmys.ykdz.forest.hyphascript.utils.ArrayUtils;
 import cn.encmys.ykdz.forest.hyphascript.utils.StringUtils;
 import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.invoke.MethodHandle;
+import java.lang.reflect.Array;
 import java.math.BigDecimal;
 import java.util.Objects;
 
@@ -95,8 +95,25 @@ public class Value {
         if (typeCheck && this.type != type)
             throw new ValueException(this, "Type error. New type is " + type + " but old type is " + this.type);
 
-        if (value != null && type == Type.ARRAY && value.getClass().getComponentType() != Reference.class) {
-            this.value = ArrayUtils.toReferences((Object[]) value);
+        if (value != null && type == Type.ARRAY && value.getClass().isArray()) {
+            Class<?> componentType = value.getClass().getComponentType();
+
+            if (Reference.class.equals(componentType)) {
+                this.value = value;
+                return;
+            }
+
+            int len = Array.getLength(value);
+            Reference[] refs = new Reference[len];
+            for (int i = 0; i < len; i++) {
+                Object elem = Array.get(value, i);
+                if (elem instanceof Reference) {
+                    refs[i] = (Reference) elem;
+                } else {
+                    refs[i] = new Reference(new Value(elem));
+                }
+            }
+            this.value = refs;
         } else {
             this.value = value;
         }
@@ -142,9 +159,10 @@ public class Value {
     }
 
     public boolean getAsBoolean() {
+        if (type == Type.NULL) return false;
         assert value != null;
+
         return switch (type) {
-            case NULL -> false;
             case BOOLEAN -> (boolean) value;
             case ARRAY -> ((Reference[]) value).length > 0;
             case STRING -> !((String) value).isEmpty();
@@ -158,9 +176,13 @@ public class Value {
             throw new ValueException(this, "Value " + this + " is not an array but: " + type);
         if (value != null && value instanceof Reference[]) {
             return (Reference[]) value;
-        } else {
+        } else if (value == null) {
             return new Reference[0];
-        }
+        } else
+            throw new ValueException(
+                    this,
+                    "Value has type " + type + ", but it is neither null nor a Reference[] (actual class: " + value.getClass() + ")"
+            );
     }
 
     public @NotNull ScriptObject getAsScriptObject() throws ValueException {
@@ -218,12 +240,13 @@ public class Value {
     }
 
     public @NotNull String toReadableString() {
-        // 因为 null 一定会被手动处理
+        // Both Type have null value
+        if (type == Type.NULL) return "null";
+        else if (type == Type.VOID) return "void";
         assert value != null;
+
         try {
             return switch (type) {
-                case VOID -> "void";
-                case NULL -> "null";
                 case CHAR -> String.valueOf((char) value);
                 case NUMBER -> StringUtils.toString((Number) value);
                 case STRING -> "\"" + value + "\"";
@@ -235,6 +258,7 @@ public class Value {
                 case ARRAY -> StringUtils.toString((Reference[]) value);
                 case ADVENTURE_COMPONENT -> StringUtils.toString((Component) value);
                 case JAVA_OBJECT -> StringUtils.toString(value);
+                default -> throw new IllegalStateException("Unexpected value: " + type);
             };
         } catch (Exception e) {
             return "[Unreadable: " + type + " (" + e.getMessage() + ")]";

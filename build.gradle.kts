@@ -1,4 +1,4 @@
-import java.util.Locale
+import java.util.*
 
 plugins {
     `java-library`
@@ -7,7 +7,7 @@ plugins {
 }
 
 group = "cn.encmys.ykdz.forest"
-version = "0.1.0-Beta"
+version = "0.1.1-Beta"
 
 repositories {
     mavenLocal()
@@ -20,17 +20,22 @@ dependencies {
     compileOnly("net.kyori:adventure-text-minimessage:4.22.0")
     testImplementation("net.kyori:adventure-api:4.22.0")
     testImplementation("net.kyori:adventure-text-minimessage:4.22.0")
+    testImplementation("org.junit.jupiter:junit-jupiter:6.0.0")
+    testImplementation("org.junit.platform:junit-platform-launcher")
 }
 
 java {
     toolchain.languageVersion.set(JavaLanguageVersion.of(21))
     withSourcesJar()
-    withJavadocJar()
 }
 
 tasks.withType<JavaCompile> {
     options.encoding = "UTF-8"
     options.release.set(21)
+}
+
+tasks.named<Test>("test") {
+    useJUnitPlatform()
 }
 
 publishing {

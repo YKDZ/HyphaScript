@@ -2,10 +2,11 @@ package cn.encmys.ykdz.forest.hyphascript.script;
 
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public record ParserResult(@NotNull String script, @NotNull Type resultType, long timeCost, @NotNull String errorMsg,
                            int errorLine,
-                           int errorColumn) {
+                           int errorColumn, @Nullable Throwable cause) {
     @Contract(pure = true)
     @Override
     public @NotNull String toString() {

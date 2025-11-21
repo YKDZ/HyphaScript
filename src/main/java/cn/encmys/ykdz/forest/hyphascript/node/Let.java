@@ -26,7 +26,6 @@ public class Let extends ASTNode {
     public @NotNull Reference evaluate(@NotNull Context ctx) {
         Reference init = initValue.evaluate(ctx);
         init.setConst(false);
-        ctx.setExported(name);
         try {
             ctx.declareMember(name, init);
         } catch (Exception e) {

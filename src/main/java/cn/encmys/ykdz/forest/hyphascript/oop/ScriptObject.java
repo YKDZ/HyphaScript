@@ -100,11 +100,9 @@ public class ScriptObject implements Cloneable {
             return Optional.empty();
         }
 
-        Object result = value.getAs(target);
-
         try {
             @SuppressWarnings("unchecked")
-            T casted = (T) result;
+            T casted = (T) value.getAs(target);
             return Optional.ofNullable(casted);
         } catch (ClassCastException e) {
             return Optional.empty();
@@ -211,7 +209,7 @@ public class ScriptObject implements Cloneable {
         throw new ScriptObjectException(this, "Impossible error");
     }
 
-    public <T> Optional<T> findMemberWithPathSafely(@NotNull String path, @NotNull Class<T> type) {
+    public <T> @NotNull Optional<T> findMemberWithPathSafely(@NotNull String path, @NotNull Class<T> type) {
         try {
             Reference ref = findMemberWithPath(path);
             Value value = ref.getReferredValue();
@@ -221,11 +219,9 @@ public class ScriptObject implements Cloneable {
                 return Optional.empty();
             }
 
-            Object result = value.getAs(targetType);
-
             try {
                 @SuppressWarnings("unchecked")
-                T casted = (T) result;
+                T casted = (T) value.getAs(targetType);
                 return Optional.ofNullable(casted);
             } catch (ClassCastException e) {
                 return Optional.empty();
