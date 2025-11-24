@@ -20,7 +20,7 @@ dependencies {
     compileOnly("net.kyori:adventure-text-minimessage:4.22.0")
     testImplementation("net.kyori:adventure-api:4.22.0")
     testImplementation("net.kyori:adventure-text-minimessage:4.22.0")
-    testImplementation("org.junit.jupiter:junit-jupiter:6.0.0")
+    testImplementation("org.junit.jupiter:junit-jupiter:6.0.1")
     testImplementation("org.junit.platform:junit-platform-launcher")
 }
 
