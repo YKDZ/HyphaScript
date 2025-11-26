@@ -15,14 +15,14 @@ repositories {
 }
 
 dependencies {
-    annotationProcessor("org.jetbrains:annotations:26.0.1")
+    annotationProcessor("org.jetbrains:annotations:26.0.2-1")
     compileOnly("net.kyori:adventure-api:4.25.0")
     compileOnly("net.kyori:adventure-text-minimessage:4.25.0")
     compileOnly("net.kyori:adventure-text-serializer-plain:4.25.0")
     testImplementation("net.kyori:adventure-api:4.25.0")
     testImplementation("net.kyori:adventure-text-minimessage:4.25.0")
     testImplementation("net.kyori:adventure-text-serializer-plain:4.25.0")
-    testImplementation("org.junit.jupiter:junit-jupiter:6.0.0")
+    testImplementation("org.junit.jupiter:junit-jupiter:6.0.1")
     testImplementation("org.junit.platform:junit-platform-launcher")
 }
 
