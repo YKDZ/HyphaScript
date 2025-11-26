@@ -62,6 +62,7 @@ public class TemplateString extends ASTNode {
         List<Value> partValues = parts.stream()
                 .map(node -> node.evaluate(ctx).getReferredValue())
                 .toList();
+        // 只要包含一个组件，即视为组件模板串
         boolean isComponent = partValues.stream()
                 .anyMatch(value -> value.isType(Value.Type.ADVENTURE_COMPONENT));
         return isComponent ? buildComponent(partValues, isOptional, ctx.getConfig().componentDecorationOverflow()) : buildString(partValues, isOptional);
