@@ -36,7 +36,7 @@ public class ImportParser implements StatementParser {
 
         final String as = ctx.match(Token.Type.AS) ? ctx.consume(Token.Type.IDENTIFIER).value() : ReflectionUtils.classNameFromPackage(classPath.value());
 
-        ctx.consume(Token.Type.FINISH);
+        ctx.consumeStatementEnd();
 
         return new ImportJava(classPath.value(), as, startToken, ctx.previous());
     }
@@ -51,7 +51,7 @@ public class ImportParser implements StatementParser {
         ctx.consume(Token.Type.FROM);
         final Token from = ctx.consume(Token.Type.STRING);
 
-        ctx.consume(Token.Type.FINISH);
+        ctx.consumeStatementEnd();
 
         return new ImportAllAs(as.value(), from.value(), startToken, ctx.previous());
     }
@@ -61,7 +61,7 @@ public class ImportParser implements StatementParser {
 
         final Token namespace = ctx.consume(Token.Type.STRING);
 
-        ctx.consume(Token.Type.FINISH);
+        ctx.consumeStatementEnd();
 
         return new ImportAllAs(namespace.value(), namespace.value(), startToken, ctx.previous());
     }
@@ -80,7 +80,7 @@ public class ImportParser implements StatementParser {
         }
         ctx.consume(Token.Type.FROM);
         Token from = ctx.consume(Token.Type.STRING);
-        ctx.consume(Token.Type.FINISH);
+        ctx.consumeStatementEnd();
 
         Token endToken = ctx.previous();
 

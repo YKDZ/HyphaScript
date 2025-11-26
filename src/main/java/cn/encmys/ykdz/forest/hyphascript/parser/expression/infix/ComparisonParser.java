@@ -17,6 +17,7 @@ public class ComparisonParser implements ExpressionParser.Infix {
     @Override
     public @NotNull ASTNode parse(@NotNull ParseContext ctx, @NotNull ASTNode left) {
         Token op = ctx.consume(Token.Type.LESS, Token.Type.LESS_EQUAL, Token.Type.GREATER, Token.Type.GREATER_EQUAL, Token.Type.INSTANCE_OF);
-        return new Comparison(op.type(), left, ctx.parseExpression(precedence()), op, ctx.current());
+        ASTNode right = ctx.parseExpression(precedence());
+        return new Comparison(op.type(), left, right, left.getStartToken(), right.getEndToken());
     }
 }

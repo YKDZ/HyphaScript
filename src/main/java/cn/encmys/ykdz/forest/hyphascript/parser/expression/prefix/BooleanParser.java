@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 public class BooleanParser implements ExpressionParser.Prefix {
     @Override
     public @NotNull ASTNode parse(@NotNull ParseContext ctx) {
-        return new Literal(new Value(Boolean.valueOf(ctx.consume(Token.Type.BOOLEAN).value())));
+        Token token = ctx.consume(Token.Type.BOOLEAN);
+        return new Literal(new Value(Boolean.valueOf(token.value())), token);
     }
 }

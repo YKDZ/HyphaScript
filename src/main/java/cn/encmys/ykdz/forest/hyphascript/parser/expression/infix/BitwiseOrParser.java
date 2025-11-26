@@ -16,7 +16,8 @@ public class BitwiseOrParser implements ExpressionParser.Infix {
 
     @Override
     public @NotNull ASTNode parse(@NotNull ParseContext ctx, @NotNull ASTNode left) {
-        Token op = ctx.consume(Token.Type.BIT_OR);
-        return new BitwiseOr(left, ctx.parseExpression(precedence()), op, ctx.current());
+        ctx.consume(Token.Type.BIT_OR);
+        ASTNode right = ctx.parseExpression(precedence());
+        return new BitwiseOr(left, right, left.getStartToken(), right.getEndToken());
     }
 }

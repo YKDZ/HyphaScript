@@ -25,10 +25,18 @@ public class FutureObject extends InternalObject {
         try {
             ScriptObject wrapper = InternalObjectManager.FUTURE.newInstance();
             cn.encmys.ykdz.forest.hyphascript.function.Function func = ctx.findMember("function").getReferredValue().getAsFunction();
-            CompletableFuture<Reference> future = CompletableFuture.supplyAsync(() -> func.call(new Value(wrapper), Collections.emptyList(), ctx));
+            CompletableFuture<Reference> future = CompletableFuture.supplyAsync(() -> {
+                try {
+                    return func.call(new Value(wrapper), Collections.emptyList(), ctx);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    throw new RuntimeException(e);
+                }
+            });
             wrapper.declareMember("future", new Value(future));
             return wrapper;
         } catch (Exception e) {
+            e.printStackTrace();
             return InternalObjectManager.FUTURE.newInstance();
         }
     }
@@ -41,11 +49,16 @@ public class FutureObject extends InternalObject {
             ScriptObject wrapper = ctx.findMember("this").getReferredValue().getAsScriptObject();
             cn.encmys.ykdz.forest.hyphascript.function.Function func = ctx.findMember("function").getReferredValue().getAsFunction();
             CompletableFuture<Reference> future = (CompletableFuture<Reference>) wrapper.findMember("future").getReferredValue().getValue();
-            if (future == null) return InternalObjectManager.FUTURE.newInstance();
-            future = future.thenApplyAsync((result) -> func.call(new Value(wrapper), List.of(result.getReferredValue()), ctx));
+            if (future == null) {
+                return InternalObjectManager.FUTURE.newInstance();
+            }
+            future = future.thenApplyAsync((result) -> {
+                return func.call(new Value(wrapper), List.of(result.getReferredValue()), ctx);
+            });
             wrapper.forceSetLocalMember("future", new Reference(new Value(future)));
             return wrapper;
         } catch (Exception e) {
+            e.printStackTrace();
             return InternalObjectManager.FUTURE.newInstance();
         }
     }
@@ -64,6 +77,19 @@ public class FutureObject extends InternalObject {
             return wrapper;
         } catch (Exception e) {
             return InternalObjectManager.FUTURE.newInstance();
+        }
+    }
+
+    @Function("get")
+    @SuppressWarnings("unchecked")
+    public static Object get(@NotNull Context ctx) {
+        try {
+            ScriptObject wrapper = ctx.findMember("this").getReferredValue().getAsScriptObject();
+            CompletableFuture<Reference> future = (CompletableFuture<Reference>) wrapper.findMember("future").getReferredValue().getValue();
+            if (future == null) return null;
+            return future.get().getReferredValue().getValue();
+        } catch (Exception e) {
+            return null;
         }
     }
 }

@@ -36,6 +36,11 @@ public class UnaryOperation extends ASTNode {
                     throw new IllegalArgumentException("- operator can only be casted in number.");
                 yield new Reference(new Value(targetValue.getAsBigDecimal().negate()));
             }
+            case NOT -> {
+                if (!targetValue.isType(Value.Type.NUMBER, Value.Type.NULL))
+                    throw new IllegalArgumentException("~ operator can only be casted in number.");
+                yield new Reference(new Value(targetValue.getAsBigDecimal().toBigInteger().not()));
+            }
             case TYPEOF -> new Reference(new Value(targetValue.getType().name()));
             default -> throw new EvaluateException(this, "Unary operator '" + operator + "' is not supported.");
         };

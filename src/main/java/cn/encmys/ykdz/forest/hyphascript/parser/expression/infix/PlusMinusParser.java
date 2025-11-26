@@ -19,9 +19,10 @@ public class PlusMinusParser implements ExpressionParser.Infix {
     @Override
     public @NotNull ASTNode parse(@NotNull ParseContext ctx, @NotNull ASTNode left) {
         Token op = ctx.consume(Token.Type.PLUS, Token.Type.MINUS);
+        ASTNode right = ctx.parseExpression(precedence());
         return switch (op.type()) {
-            case PLUS -> new Plus(left, ctx.parseExpression(precedence()), op, ctx.current());
-            case MINUS -> new Minus(left, ctx.parseExpression(precedence()), op, ctx.current());
+            case PLUS -> new Plus(left, right, left.getStartToken(), right.getEndToken());
+            case MINUS -> new Minus(left, right, left.getStartToken(), right.getEndToken());
             default -> throw new ParserException("Provide non plus or minus operator to PlusMinusParser", op);
         };
     }

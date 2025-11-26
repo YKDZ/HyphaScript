@@ -22,6 +22,11 @@ public class Literal extends ASTNode {
         this.value = new Reference(value);
     }
 
+    public Literal(@NotNull Value value, @NotNull Token token) {
+        super(token, token);
+        this.value = new Reference(value);
+    }
+
     @Override
     public @NotNull Reference evaluate(@NotNull Context ctx) {
         return value;

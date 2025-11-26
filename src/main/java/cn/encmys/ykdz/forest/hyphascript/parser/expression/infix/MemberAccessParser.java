@@ -19,6 +19,6 @@ public class MemberAccessParser implements ExpressionParser.Infix {
         Token dot = ctx.consume(Token.Type.DOT);
         Token member = ctx.consume(Token.Type.IDENTIFIER);
         boolean isRead = !ctx.check(Token.Type.EQUALS, Token.Type.PLUS_EQUALS, Token.Type.MUL_EQUALS, Token.Type.MUL_EQUALS, Token.Type.DIV_EQUALS, Token.Type.MOD_EQUALS);
-        return new MemberAccess(left, member.value(), isRead, dot, ctx.previous());
+        return new MemberAccess(left, member.value(), isRead, left.getStartToken(), ctx.previous());
     }
 }

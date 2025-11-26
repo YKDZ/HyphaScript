@@ -44,7 +44,7 @@ public class FunctionDeclarationParser implements StatementParser {
         if (ctx.check(Token.Type.LEFT_BRACE)) {
             body = ctx.parseBlock();
         } else {
-            body = new Return(ctx.parseBlock(), leftParen, ctx.current());
+            body = new Return(ctx.parseExpression(PrecedenceTable.Precedence.LOWEST), leftParen, ctx.current());
         }
 
         return new Function(functionName, parameters, uncertainParameter, body, leftParen, ctx.current());

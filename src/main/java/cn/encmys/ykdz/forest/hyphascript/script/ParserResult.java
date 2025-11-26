@@ -6,7 +6,7 @@ import org.jetbrains.annotations.Nullable;
 
 public record ParserResult(@NotNull String script, @NotNull Type resultType, long timeCost, @NotNull String errorMsg,
                            int errorLine,
-                           int errorColumn, @Nullable Throwable cause) {
+                           int errorColumn, int errorLength, @Nullable Throwable cause) {
     @Contract(pure = true)
     @Override
     public @NotNull String toString() {
@@ -33,8 +33,9 @@ public record ParserResult(@NotNull String script, @NotNull Type resultType, lon
                 if (i == errorLineIndex) {
                     String line = lines[i];
                     int lineLength = line.length();
-                    int spaces = Math.min(errorColumn - 1, lineLength);
-                    String indicator = " ".repeat(spaces) + "^";
+                    int spaces = Math.max(0, Math.min(errorColumn - 1, lineLength));
+                    int length = Math.max(1, Math.min(errorLength, lineLength - spaces));
+                    String indicator = " ".repeat(spaces) + "^".repeat(length);
                     sb.append(indicator).append("\n");
                 }
             }

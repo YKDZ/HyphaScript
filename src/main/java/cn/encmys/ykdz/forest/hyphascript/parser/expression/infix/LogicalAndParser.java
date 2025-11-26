@@ -17,6 +17,7 @@ public class LogicalAndParser implements ExpressionParser.Infix {
     @Override
     public @NotNull ASTNode parse(@NotNull ParseContext ctx, @NotNull ASTNode left) {
         Token op = ctx.consume(Token.Type.LOGIC_AND);
-        return new LogicalAnd(left, ctx.parseExpression(precedence()), op, ctx.current());
+        ASTNode right = ctx.parseExpression(precedence());
+        return new LogicalAnd(left, right, left.getStartToken(), right.getEndToken());
     }
 }

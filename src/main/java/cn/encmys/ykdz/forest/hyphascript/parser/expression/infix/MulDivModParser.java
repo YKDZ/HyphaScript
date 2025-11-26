@@ -20,10 +20,11 @@ public class MulDivModParser implements ExpressionParser.Infix {
     @Override
     public @NotNull ASTNode parse(@NotNull ParseContext ctx, @NotNull ASTNode left) {
         Token op = ctx.consume(Token.Type.MUL, Token.Type.DIV, Token.Type.MOD);
+        ASTNode right = ctx.parseExpression(precedence());
         return switch (op.type()) {
-            case MUL -> new Mul(left, ctx.parseExpression(precedence()), op, ctx.current());
-            case DIV -> new Div(left, ctx.parseExpression(precedence()), op, ctx.current());
-            case MOD -> new Mod(left, ctx.parseExpression(precedence()), op, ctx.current());
+            case MUL -> new Mul(left, right, left.getStartToken(), right.getEndToken());
+            case DIV -> new Div(left, right, left.getStartToken(), right.getEndToken());
+            case MOD -> new Mod(left, right, left.getStartToken(), right.getEndToken());
             default -> throw new ParserException("Provide non mul, div or mod operator to MulDivModParser", op);
         };
     }

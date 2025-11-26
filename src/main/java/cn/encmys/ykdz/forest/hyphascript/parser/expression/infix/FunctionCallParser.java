@@ -2,7 +2,6 @@ package cn.encmys.ykdz.forest.hyphascript.parser.expression.infix;
 
 import cn.encmys.ykdz.forest.hyphascript.node.ASTNode;
 import cn.encmys.ykdz.forest.hyphascript.node.FunctionCall;
-import cn.encmys.ykdz.forest.hyphascript.node.MemberAccess;
 import cn.encmys.ykdz.forest.hyphascript.parser.ParseContext;
 import cn.encmys.ykdz.forest.hyphascript.parser.PrecedenceTable;
 import cn.encmys.ykdz.forest.hyphascript.parser.expression.ExpressionParser;
@@ -21,15 +20,15 @@ public class FunctionCallParser implements ExpressionParser.Infix {
 
     @Override
     public @NotNull ASTNode parse(@NotNull ParseContext ctx, @NotNull ASTNode left) {
-        Token lParen = ctx.consume(Token.Type.LEFT_PAREN);
-        List<ASTNode> args = parseArguments(ctx);
-        Token rParen = ctx.consume(Token.Type.RIGHT_PAREN);
-
-        if (left instanceof MemberAccess memberAccess) {
-            return new FunctionCall(memberAccess.getTarget(), memberAccess.getMember(), args, lParen, rParen);
+        Token startToken = ctx.consume(Token.Type.LEFT_PAREN);
+        List<ASTNode> arguments = new ArrayList<>();
+        if (!ctx.check(Token.Type.RIGHT_PAREN)) {
+            do {
+                arguments.add(ctx.parseExpression(PrecedenceTable.Precedence.LOWEST));
+            } while (ctx.match(Token.Type.COMMA));
         }
-
-        return new FunctionCall(left, "", args, lParen, rParen);
+        Token endToken = ctx.consume(Token.Type.RIGHT_PAREN);
+        return new FunctionCall(left, "", arguments, startToken, endToken);
     }
 
     private @NotNull List<ASTNode> parseArguments(@NotNull ParseContext ctx) {

@@ -68,42 +68,84 @@ public class Lexer {
 
     public @NotNull List<Token> tokenize() {
         tokens.clear();
+        Token lastToken = null;
 
         while (currentChar != EOF) {
+            boolean hasNewline = skipWhitespaceAndComments();
+
+            if (currentChar == EOF) break;
+
+            if (hasNewline && shouldInsertSemicolon(lastToken, currentChar)) {
+                Token finishToken = new Token(Token.Type.FINISH, ";", currentLine, currentColumn);
+                tokens.add(finishToken);
+            }
+
             Token token = nextToken();
             tokens.add(token);
+            lastToken = token;
+
             if (token.type() == Token.Type.EOF) break;
         }
 
-        handleOmit();
+        if (shouldInsertSemicolon(lastToken, EOF)) {
+            tokens.add(new Token(Token.Type.FINISH, ";", currentLine, currentColumn));
+        }
 
-        if (!tokens.isEmpty() && tokens.getLast().type() != Token.Type.EOF) {
+        if (tokens.isEmpty() || tokens.getLast().type() != Token.Type.EOF) {
             tokens.add(new Token(Token.Type.EOF, "", currentLine, currentColumn));
         }
 
         return tokens;
     }
 
-    private void handleOmit() {
-        // 针对单行表达式，如果脚本中没有换行，则需要检查末尾是否缺少分号
-        if (!script.contains("\n")) {
-            int lastNonEofIndex = -1;
-            for (int i = tokens.size() - 1; i >= 0; i--) {
-                if (tokens.get(i).type() != Token.Type.EOF) {
-                    lastNonEofIndex = i;
-                    break;
-                }
-            }
-            if (lastNonEofIndex != -1) {
-                Token lastToken = tokens.get(lastNonEofIndex);
-                if (lastToken.type() != Token.Type.FINISH) {
-                    int line = lastToken.line();
-                    int column = lastToken.column() + lastToken.value().length();
-                    Token finishToken = new Token(Token.Type.FINISH, ";", line, column);
-                    tokens.add(lastNonEofIndex + 1, finishToken);
-                }
-            }
+    private boolean shouldInsertSemicolon(Token lastToken, char nextChar) {
+        if (lastToken == null) return false;
+        if (lastToken.type() == Token.Type.FINISH) return false;
+        if (lastToken.type() == Token.Type.LEFT_BRACE) return false;
+
+        boolean canEndStatement = switch (lastToken.type()) {
+            case IDENTIFIER, NUMBER, STRING, CHAR, BOOLEAN, NULL,
+                 RETURN, BREAK, CONTINUE,
+                 BACKTICK -> true;
+            default -> false;
+        };
+
+        if (!canEndStatement) return false;
+
+        if (nextChar == EOF) return true;
+        if (nextChar == '}') {
+            return switch (lastToken.type()) {
+                case RETURN, BREAK, CONTINUE -> true;
+                default -> false;
+            };
         }
+
+        // Check for operators that usually continue a statement
+        return switch (nextChar) {
+            case '(', ')', '[', ']', '{', '}', '+', '-', '*', '/', '%', '=', '<', '>', '!', '&', '|', '?', ':', '.',
+                 ',' -> false;
+            default -> {
+                // Check for keywords that shouldn't be preceded by a semicolon (like else, catch, finally, while)
+                if (Character.isAlphabetic(nextChar)) {
+                    String nextWord = peekWord();
+                    yield !nextWord.equals("else") &&
+                            !nextWord.equals("catch") &&
+                            !nextWord.equals("finally") &&
+                            !nextWord.equals("while");
+                }
+                yield true;
+            }
+        };
+    }
+
+    private String peekWord() {
+        int tempPos = position;
+        StringBuilder sb = new StringBuilder();
+        while (tempPos < script.length() && isIdentifierPart(script.charAt(tempPos))) {
+            sb.append(script.charAt(tempPos));
+            tempPos++;
+        }
+        return sb.toString();
     }
 
     private void advance() {
@@ -118,39 +160,55 @@ public class Lexer {
         currentChar = position < script.length() ? script.charAt(position) : EOF;
     }
 
-    private void skipWhitespaceAndComments() {
+    private boolean skipWhitespaceAndComments() {
+        boolean hasNewline = false;
         while (Character.isWhitespace(currentChar) || isCommentStart()) {
             if (Character.isWhitespace(currentChar)) {
+                if (currentChar == NEWLINE) {
+                    hasNewline = true;
+                }
                 advance();
             } else if (isCommentStart()) {
-                handleComments();
+                if (handleComments()) {
+                    hasNewline = true;
+                }
             }
         }
+        return hasNewline;
     }
 
     private boolean isCommentStart() {
         return currentChar == '/' && (nextChar() == '/' || nextChar() == '*');
     }
 
-    private void handleComments() {
+    private boolean handleComments() {
+        boolean hasNewline = false;
         advance(); // 跳过 '/'
         if (currentChar == '/') {
             skipSingleLineComment();
+            hasNewline = true;
         } else if (currentChar == '*') {
-            skipMultiLineComment();
+            if (skipMultiLineComment()) {
+                hasNewline = true;
+            }
         }
+        return hasNewline;
     }
 
     private void skipSingleLineComment() {
         while (currentChar != NEWLINE && currentChar != EOF) {
             advance();
         }
-        advance(); // 跳过换行符
+        if (currentChar == NEWLINE) {
+            advance();
+        }
     }
 
-    private void skipMultiLineComment() {
+    private boolean skipMultiLineComment() {
+        boolean hasNewline = false;
         advance(); // 跳过 '*'
         while (!(currentChar == '*' && nextChar() == '/')) {
+            if (currentChar == NEWLINE) hasNewline = true;
             if (currentChar == EOF) {
                 throw new LexerException("Unterminated multi-line comment", currentLine, currentColumn);
             }
@@ -158,6 +216,7 @@ public class Lexer {
         }
         advance(); // 跳过 '*'
         advance(); // 跳过 '/'
+        return hasNewline;
     }
 
     private char nextChar() {
@@ -173,6 +232,8 @@ public class Lexer {
 
         return switch (currentChar) {
             case '(' -> parseSingleCharToken(Token.Type.LEFT_PAREN);
+            case '~' -> parseSingleCharToken(Token.Type.NOT);
+            case '^' -> parseSingleCharToken(Token.Type.XOR);
             case ')' -> parseSingleCharToken(Token.Type.RIGHT_PAREN);
             case '{' -> parseSingleCharToken(Token.Type.LEFT_BRACE);
             case '}' -> parseSingleCharToken(Token.Type.RIGHT_BRACE);
@@ -185,10 +246,23 @@ public class Lexer {
             case ':' -> parseComplexOperator(':', Token.Type.COLON, Token.Type.COLON_EQUALS);
             case '+' -> parseComplexOperator('+', Token.Type.PLUS, Token.Type.PLUS_EQUALS);
             case '-' -> parseComplexOperator('-', Token.Type.MINUS, Token.Type.MINUS_EQUALS);
-            case '*' -> parseComplexOperator('*', Token.Type.MUL, Token.Type.MUL_EQUALS);
+            case '*' -> {
+                advance();
+                if (currentChar == '=') {
+                    advance();
+                    yield new Token(Token.Type.MUL_EQUALS, "*=", currentLine, currentColumn);
+                } else if (currentChar == '*') {
+                    advance();
+                    if (currentChar == '=') {
+                        advance();
+                        yield new Token(Token.Type.POWER_EQUALS, "**=", currentLine, currentColumn);
+                    }
+                    yield new Token(Token.Type.POWER, "**", currentLine, currentColumn);
+                }
+                yield new Token(Token.Type.MUL, "*", currentLine, currentColumn);
+            }
             case '/' -> parseComplexOperator('/', Token.Type.DIV, Token.Type.DIV_EQUALS);
             case '%' -> parseComplexOperator('%', Token.Type.MOD, Token.Type.MOD_EQUALS);
-            case '^' -> parseComplexOperator('^', Token.Type.POWER, Token.Type.POWER_EQUALS);
             case '!', '<', '>' -> parseComparisonOperator();
             case '|', '&' -> parseLogicalOperator();
             case '.' -> {
@@ -239,6 +313,10 @@ public class Lexer {
         if (currentChar == '=') {
             advance();
             return new Token(getComparisonType(first + "="), first + "=", currentLine, currentColumn);
+        }
+        if ((first == '<' || first == '>') && currentChar == first) {
+            advance();
+            return new Token(first == '<' ? Token.Type.SHIFT_LEFT : Token.Type.SHIFT_RIGHT, first + "" + first, currentLine, currentColumn);
         }
         return new Token(getComparisonType(String.valueOf(first)), String.valueOf(first), currentLine, currentColumn);
     }

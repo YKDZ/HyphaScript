@@ -76,6 +76,9 @@ public class InternalObjectFunction extends ScriptObject implements Function {
 
         try {
             Object result = body.invokeWithArguments(localContext);
+            if (result instanceof Value) {
+                return new Reference((Value) result);
+            }
             return new Reference(new Value(result));
         } catch (Throwable e) {
             throw new FunctionException(

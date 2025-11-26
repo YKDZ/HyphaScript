@@ -22,7 +22,7 @@ public class DoWhileStatement implements StatementParser {
         ctx.consume(Token.Type.LEFT_PAREN);
         ASTNode condition = ctx.parseExpression(PrecedenceTable.Precedence.LOWEST);
         ctx.consume(Token.Type.RIGHT_PAREN);
-        ctx.consume(Token.Type.FINISH);
+        ctx.consumeStatementEnd();
 
         Token endToken = ctx.previous();
 

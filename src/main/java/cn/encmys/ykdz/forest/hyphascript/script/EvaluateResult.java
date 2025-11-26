@@ -40,23 +40,48 @@ public record EvaluateResult(@NotNull Type type, @NotNull String script, @NotNul
         sb.append("\n");
 
         // 显示错误行及附近1行上下文
-        int errorLineIndex = errorStartLine - 1;
-        int startLine = Math.max(0, errorLineIndex - 1);
-        int endLine = Math.min(lines.length, errorLineIndex + 2); // +2 因为循环条件是 i < endLine
+        int startLineIndex = Math.max(0, errorStartLine - 2);
+        int endLineIndex = Math.min(lines.length, errorEndLine + 1);
 
-        for (int i = startLine; i < endLine; i++) {
-            sb.append(lines[i]).append("\n");
-            if (i == errorLineIndex) {
-                int lineLength = lines[i].length();
-                // 计算起始空格和 ^ 的长度
-                int spaces = Math.min(errorStartColumn - 2, lineLength);
-                int caretSpan = errorEndColumn - errorStartColumn + 1;
-                // 确保 ^ 不超过行尾
-                caretSpan = Math.min(caretSpan, lineLength - spaces);
-                caretSpan = Math.max(caretSpan, 1); // 至少显示一个 ^
+        for (int i = startLineIndex; i < endLineIndex; i++) {
+            String line = lines[i];
+            sb.append(line).append("\n");
 
-                String indicator = " ".repeat(spaces) + "^".repeat(caretSpan);
-                sb.append(indicator).append("\n");
+            int currentLineNum = i + 1;
+            if (currentLineNum >= errorStartLine && currentLineNum <= errorEndLine) {
+                int lineLength = line.length();
+
+                int startCol = (currentLineNum == errorStartLine) ? errorStartColumn : 1;
+                int endCol = (currentLineNum == errorEndLine) ? errorEndColumn : lineLength;
+
+                int spaces = Math.max(0, startCol - 1);
+                spaces = Math.min(spaces, lineLength);
+
+                int length;
+                if (currentLineNum == errorStartLine && currentLineNum == errorEndLine) {
+                    length = endCol - startCol + 1;
+                } else if (currentLineNum == errorStartLine) {
+                    length = lineLength - startCol + 1;
+                } else if (currentLineNum == errorEndLine) {
+                    length = endCol;
+                } else {
+                    length = lineLength;
+                }
+
+                length = Math.max(1, length);
+                if (lineLength > 0) {
+                    length = Math.min(length, lineLength - spaces);
+                }
+
+                if (length > 0 && spaces + length <= lineLength + 1) { // Allow 1 char overflow for empty lines or end of line
+                    // Actually, repeat throws if count < 0.
+                    // And we want to avoid printing beyond line if possible, but for empty line maybe we want a caret?
+                    // If line is empty, spaces=0, length=1. " " * 0 + "^" * 1 = "^".
+                    // If line is "abc", spaces=3, length=1. "   ^".
+
+                    String indicator = " ".repeat(spaces) + "^".repeat(length);
+                    sb.append(indicator).append("\n");
+                }
             }
         }
 

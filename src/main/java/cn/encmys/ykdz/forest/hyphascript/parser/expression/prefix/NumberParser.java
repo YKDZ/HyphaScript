@@ -13,7 +13,7 @@ import java.math.BigDecimal;
 public class NumberParser implements ExpressionParser.Prefix {
     @Override
     public @NotNull ASTNode parse(@NotNull ParseContext ctx) {
-        final String value = ctx.consume(Token.Type.NUMBER).value();
-        return new Literal(new Value(new BigDecimal(value)));
+        Token token = ctx.consume(Token.Type.NUMBER);
+        return new Literal(new Value(new BigDecimal(token.value())), token);
     }
 }

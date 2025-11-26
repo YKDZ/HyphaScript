@@ -15,7 +15,7 @@ public class BreakParser implements StatementParser {
     @Override
     public @NotNull ASTNode parse(@NotNull ParseContext ctx) {
         Token startToken = ctx.previous();
-        ctx.consume(Token.Type.FINISH);
+        ctx.consumeStatementEnd();
         return new Break(startToken);
     }
 }

@@ -22,7 +22,8 @@ public class TemplateStringParser implements ExpressionParser.Prefix {
         List<ASTNode> parts = new ArrayList<>();
         while (!ctx.match(Token.Type.BACKTICK)) {
             if (ctx.match(Token.Type.STRING)) {
-                parts.add(new Literal(new Value(ctx.previous().value())));
+                Token token = ctx.previous();
+                parts.add(new Literal(new Value(token.value()), token));
             } else {
                 parts.add(ctx.parseExpression(PrecedenceTable.Precedence.LOWEST));
             }

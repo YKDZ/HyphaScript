@@ -24,8 +24,8 @@ public class Assignment extends ASTNode {
     @NotNull
     private final ASTNode expression;
 
-    public Assignment(@NotNull Token.Type operator, @NotNull ASTNode target, @NotNull ASTNode expression, @NotNull Token startToken) {
-        super(startToken, startToken);
+    public Assignment(@NotNull Token.Type operator, @NotNull ASTNode target, @NotNull ASTNode expression, @NotNull Token startToken, @NotNull Token endToken) {
+        super(startToken, endToken);
         this.operator = operator;
         this.target = target;
         this.expression = expression;

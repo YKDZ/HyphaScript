@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 public class NullParser implements ExpressionParser.Prefix {
     @Override
     public @NotNull ASTNode parse(@NotNull ParseContext ctx) {
-        ctx.consume(Token.Type.NULL);
-        return new Literal(new Value(null));
+        Token token = ctx.consume(Token.Type.NULL);
+        return new Literal(new Value(null), token);
     }
 }

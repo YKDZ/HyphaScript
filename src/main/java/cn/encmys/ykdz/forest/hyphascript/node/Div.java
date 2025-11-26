@@ -30,6 +30,10 @@ public class Div extends ASTNode {
         BigDecimal l = leftRef.getReferredValue().getAsBigDecimal();
         BigDecimal r = rightRef.getReferredValue().getAsBigDecimal();
 
-        return new Reference(new Value(l.divide(r, ctx.getConfig().divRoundingMode())));
+        try {
+            return new Reference(new Value(l.divide(r, ctx.getConfig().divRoundingMode())));
+        } catch (ArithmeticException e) {
+            throw new EvaluateException(this, e.getMessage());
+        }
     }
 }

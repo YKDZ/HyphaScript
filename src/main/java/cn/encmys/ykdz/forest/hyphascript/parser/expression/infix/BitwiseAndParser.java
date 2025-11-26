@@ -16,7 +16,8 @@ public class BitwiseAndParser implements ExpressionParser.Infix {
 
     @Override
     public @NotNull ASTNode parse(@NotNull ParseContext ctx, @NotNull ASTNode left) {
-        Token op = ctx.consume(Token.Type.BIT_AND);
-        return new BitwiseAnd(left, ctx.parseExpression(precedence()), op, ctx.current());
+        ctx.consume(Token.Type.BIT_AND);
+        ASTNode right = ctx.parseExpression(precedence());
+        return new BitwiseAnd(left, right, left.getStartToken(), right.getEndToken());
     }
 }

@@ -17,6 +17,7 @@ public class LogicalOrParser implements ExpressionParser.Infix {
     @Override
     public @NotNull ASTNode parse(@NotNull ParseContext ctx, @NotNull ASTNode left) {
         Token op = ctx.consume(Token.Type.LOGIC_OR);
-        return new LogicalOr(left, ctx.parseExpression(precedence()), op, ctx.current());
+        ASTNode right = ctx.parseExpression(precedence());
+        return new LogicalOr(left, right, left.getStartToken(), right.getEndToken());
     }
 }

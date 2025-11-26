@@ -19,20 +19,24 @@ public class PrecedenceTable {
 
     public enum Precedence {
         LOWEST(0),
-        ASSIGNMENT(1),      // = := += -= *= /= %= ^=
+        ASSIGNMENT(1),      // = := += -= *= /= %= **=
         CONDITIONAL(2),     // ? :
         LOGIC_OR(3),        // ||
         LOGIC_AND(4),       // &&
         BIT_OR(5),        // |
-        BIT_AND(6),       // &
-        EQUALITY(7),        // == !=
-        COMPARISON(8),      // < <= > >=
-        PLUS_MINUS(9),            // + -
-        MUL_DIV_MOD(10),          // * / %
-        POWER(11),           // ^
-        UNARY(12),          // typeof ! -
-        CALL(13),           // ()
-        MEMBER_ACCESS(14);         // . []
+        XOR(6),           // ^
+        BIT_AND(7),       // &
+        EQUALITY(8),        // == !=
+        COMPARISON(9),      // < <= > >=
+        SHIFT_LEFT(10),     // <<
+        SHIFT_RIGHT(10),    // >>
+        PLUS_MINUS(11),            // + -
+        MUL_DIV_MOD(12),          // * / %
+        POWER(13),           // **
+        UNARY(14),          // typeof ! - ~
+        CALL(15),           // ()
+        MEMBER_ACCESS(16),         // . []
+        NOT(14);         // ~
 
         final int level;
 

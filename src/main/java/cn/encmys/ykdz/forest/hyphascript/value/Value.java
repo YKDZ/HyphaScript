@@ -211,10 +211,14 @@ public class Value {
     }
 
     public @NotNull Component getAsAdventureComponent() throws ValueException {
-        if (type != Type.ADVENTURE_COMPONENT)
-            throw new ValueException(this, "Value " + this + " is not a component but: " + type);
-        assert value != null;
-        return (Component) value;
+        if (value == null) return Component.empty();
+
+        if (type == Type.ADVENTURE_COMPONENT)
+            return (Component) value;
+        else if (type == Type.STRING)
+            return Component.text((String) value);
+            // 尽力将所有内容转化为 Component
+        else return Component.text(toReadableString());
     }
 
     public @NotNull Class<?> getClassOfValue() throws ValueException {

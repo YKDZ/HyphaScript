@@ -81,6 +81,19 @@ public class ParseContext {
         throw new ParserException("Unexpected token, expected " + expect + " but given: " + current() + ".", current());
     }
 
+    public void consumeStatementEnd() {
+        if (match(Token.Type.FINISH)) {
+            return;
+        }
+        if (check(Token.Type.RIGHT_BRACE) || check(Token.Type.EOF)) {
+            return;
+        }
+        if (previous().line() < current().line()) {
+            return;
+        }
+        throw new ParserException("Unexpected token, expected FINISH or statement end but given: " + current() + ".", current());
+    }
+
     public @NotNull Token current() {
         return tokens.get(currentIndex);
     }

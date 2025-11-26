@@ -17,6 +17,7 @@ public class AssignmentParser implements ExpressionParser.Infix {
     @Override
     public @NotNull ASTNode parse(@NotNull ParseContext ctx, @NotNull ASTNode left) {
         Token op = ctx.consume(Token.Type.EQUALS, Token.Type.COLON_EQUALS, Token.Type.PLUS_EQUALS, Token.Type.MINUS_EQUALS, Token.Type.DIV_EQUALS, Token.Type.MUL_EQUALS, Token.Type.MOD_EQUALS, Token.Type.POWER_EQUALS);
-        return new Assignment(op.type(), left, ctx.parseExpression(precedence()), op);
+        ASTNode right = ctx.parseExpression(precedence());
+        return new Assignment(op.type(), left, right, left.getStartToken(), right.getEndToken());
     }
 }

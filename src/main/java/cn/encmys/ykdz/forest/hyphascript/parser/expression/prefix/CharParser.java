@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 public class CharParser implements ExpressionParser.Prefix {
     @Override
     public @NotNull ASTNode parse(@NotNull ParseContext ctx) {
-        return new Literal(new Value(ctx.consume(Token.Type.CHAR).value().charAt(0)));
+        Token token = ctx.consume(Token.Type.CHAR);
+        return new Literal(new Value(token.value().charAt(0)), token);
     }
 }

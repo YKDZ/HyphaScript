@@ -5,6 +5,7 @@ import cn.encmys.ykdz.forest.hyphascript.exception.EvaluateException;
 import cn.encmys.ykdz.forest.hyphascript.token.Token;
 import cn.encmys.ykdz.forest.hyphascript.value.Reference;
 import cn.encmys.ykdz.forest.hyphascript.value.Value;
+import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 
 import java.math.BigDecimal;
@@ -26,11 +27,17 @@ public class Plus extends ASTNode {
         Reference leftRef = left.evaluate(ctx);
         Reference rightRef = right.evaluate(ctx);
 
+        // 字符串链接中所有对象都被当作字符串
         if (leftRef.getReferredValue().isType(Value.Type.STRING)) {
-            // 字符串链接中所有对象都被当作字符串
             String l = leftRef.getReferredValue().getAsString();
             String r = rightRef.getReferredValue().getAsString();
             return new Reference(new Value(l.concat(r)));
+        }
+        // Adventure 组件链接中所有对象都被当作组件
+        else if (leftRef.getReferredValue().isType(Value.Type.ADVENTURE_COMPONENT)) {
+            Component left = leftRef.getReferredValue().getAsAdventureComponent();
+            Component right = rightRef.getReferredValue().getAsAdventureComponent();
+            return ctx.getConfig().componentDecorationOverflow() ? new Reference(new Value(left.append(right))) : new Reference(new Value(Component.empty().append(left).append(right)));
         } else if (leftRef.getReferredValue().isType(Value.Type.ARRAY)) {
             Reference[] leftArray = leftRef.getReferredValue().getAsArray();
             // 不修改原始数组

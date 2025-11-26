@@ -48,7 +48,7 @@ public class Parser {
 
     private @NotNull ASTNode parseExpressionStatement() {
         ASTNode expr = parseExpression(PrecedenceTable.Precedence.LOWEST);
-        ctx.match(Token.Type.FINISH);
+        ctx.consumeStatementEnd();
         return expr;
     }
 
@@ -104,6 +104,7 @@ public class Parser {
         registerPrefix(Token.Type.MINUS, new UnaryParser());
         registerPrefix(Token.Type.BANG, new UnaryParser());
         registerPrefix(Token.Type.TYPEOF, new UnaryParser());
+        registerPrefix(Token.Type.NOT, new UnaryParser());
         registerPrefix(Token.Type.BOOLEAN, new BooleanParser());
         registerPrefix(Token.Type.CHAR, new CharParser());
         registerPrefix(Token.Type.IDENTIFIER, new IdentifierParser());
@@ -119,6 +120,9 @@ public class Parser {
         registerInfix(Token.Type.LEFT_BRACKET, new ArrayAccessParser());
         registerInfix(Token.Type.BIT_OR, new BitwiseOrParser());
         registerInfix(Token.Type.BIT_AND, new BitwiseAndParser());
+        registerInfix(Token.Type.XOR, new BitwiseXorParser());
+        registerInfix(Token.Type.SHIFT_LEFT, new BitwiseShiftLeftParser());
+        registerInfix(Token.Type.SHIFT_RIGHT, new BitwiseShiftRightParser());
         registerInfix(Token.Type.LESS, new ComparisonParser());
         registerInfix(Token.Type.GREATER, new ComparisonParser());
         registerInfix(Token.Type.GREATER_EQUAL, new ComparisonParser());

@@ -25,10 +25,10 @@ public class MapFunctionCallParser implements ExpressionParser.Infix {
         Token rParen = ctx.consume(Token.Type.RIGHT_BRACE);
 
         if (left instanceof MemberAccess memberAccess) {
-            return new FunctionCall(memberAccess.getTarget(), memberAccess.getMember(), args, lParen, rParen);
+            return new FunctionCall(memberAccess.getTarget(), memberAccess.getMember(), args, left.getStartToken(), rParen);
         }
 
-        return new FunctionCall(left, "", args, lParen, rParen);
+        return new FunctionCall(left, "", args, left.getStartToken(), rParen);
     }
 
     private @NotNull Map<String, ASTNode> parseArguments(@NotNull ParseContext ctx) {

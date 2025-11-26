@@ -14,7 +14,7 @@ import java.util.List;
 
 public class Context extends ScriptObject implements Cloneable {
     private @NotNull List<@NotNull String> importedJavaClasses = new ArrayList<>();
-    private @NotNull Config config = new Config(RoundingMode.HALF_UP, RoundingMode.HALF_UP, false);
+    private @NotNull Config config = new Config(RoundingMode.HALF_UP, RoundingMode.HALF_UP, false, false);
 
     /**
      * Construct a new context with GLOBAL_OBJECT as parent.
@@ -22,7 +22,7 @@ public class Context extends ScriptObject implements Cloneable {
      * @see InternalObjectManager#GLOBAL_OBJECT
      */
     public Context() {
-        this(InternalObjectManager.OBJECT_PROTOTYPE);
+        this(InternalObjectManager.GLOBAL_OBJECT);
     }
 
     public Context(@Nullable ScriptObject parent) {
@@ -59,7 +59,7 @@ public class Context extends ScriptObject implements Cloneable {
         cloned.members.putAll(this.members);
         cloned.__proto__ = this.__proto__;
         cloned.importedJavaClasses = this.importedJavaClasses;
-        cloned.config = new Config(this.config.divRoundingMode, this.config.equalRoundingMode, this.config.runtimeTypeCheck);
+        cloned.config = new Config(this.config.divRoundingMode, this.config.equalRoundingMode, this.config.runtimeTypeCheck, this.config.componentDecorationOverflow);
         return cloned;
     }
 
@@ -71,7 +71,8 @@ public class Context extends ScriptObject implements Cloneable {
 
     public record Config(@NotNull RoundingMode divRoundingMode,
                          @NotNull RoundingMode equalRoundingMode,
-                         boolean runtimeTypeCheck) {
+                         boolean runtimeTypeCheck,
+                         boolean componentDecorationOverflow) {
     }
 
     public static class Builder {

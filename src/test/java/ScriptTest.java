@@ -3,14 +3,23 @@ import cn.encmys.ykdz.forest.hyphascript.exception.ValueException;
 import cn.encmys.ykdz.forest.hyphascript.script.EvaluateResult;
 import cn.encmys.ykdz.forest.hyphascript.script.Script;
 import cn.encmys.ykdz.forest.hyphascript.value.Value;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.TextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
+
+import java.math.RoundingMode;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 public class ScriptTest {
     private static @NotNull Value evaluate(@NotNull String script) throws ValueException {
-        EvaluateResult result = new Script(script).evaluate(new Context());
+        return evaluate(script, new Context());
+    }
+
+    private static @NotNull Value evaluate(@NotNull String script, @NotNull Context ctx) throws ValueException {
+        EvaluateResult result = new Script(script).evaluate(ctx);
         if (result.type() != EvaluateResult.Type.SUCCESS) {
             System.out.println(result);
             throw new RuntimeException(result.cause());
@@ -27,30 +36,34 @@ public class ScriptTest {
         assertEquals(8d, evaluate("-1 * -8").getAsBigDecimal().intValue());
         assertEquals(-2d, evaluate("-4 / 2").getAsBigDecimal().intValue());
         assertEquals(0d, evaluate("-4 % 2").getAsBigDecimal().intValue());
-        assertEquals(16d, evaluate("-4 ^ 2").getAsBigDecimal().intValue());
+        assertEquals(16d, evaluate("-4 ** 2").getAsBigDecimal().intValue());
 
         assertEquals(3.1f, evaluate("1.1 + 2").getAsBigDecimal().floatValue());
         assertEquals(-0.9f, evaluate("1.1 - 2").getAsBigDecimal().floatValue());
         assertEquals(2.2f, evaluate("1.1 * 2").getAsBigDecimal().floatValue());
         assertEquals(0.6f, evaluate("1.1 / 2").getAsBigDecimal().floatValue());
         assertEquals(0.55f, evaluate("1.10 / 2").getAsBigDecimal().floatValue());
-        assertEquals(1.21f, evaluate("1.1 ^ 2").getAsBigDecimal().floatValue());
+        assertEquals(1.21f, evaluate("1.1 ** 2").getAsBigDecimal().floatValue());
 
         assertEquals("ab1", evaluate("\"ab\" + 1").getAsString());
         assertEquals("abed", evaluate("\"ab\" + \"ed\"").getAsString());
 
         assertEquals(5, evaluate("5 & 7").getAsBigDecimal().intValue());
         assertEquals(5, evaluate("5 | 1").getAsBigDecimal().intValue());
+        assertEquals(-5, evaluate("~4").getAsBigDecimal().intValue());
+        assertEquals(8, evaluate("2 << 2").getAsBigDecimal().intValue());
+        assertEquals(2, evaluate("8 >> 2").getAsBigDecimal().intValue());
+        assertEquals(10, evaluate("8 ^ 2").getAsBigDecimal().intValue());
     }
 
     @Test
     void array() {
         assertEquals(5d, evaluate("""
-                const arr = [1, 2, 3, 4];
+                const arr = [1, 2, 3, 4]
                 arr[0] + arr[3]
                 """).getAsBigDecimal().intValue());
         assertEquals("YKDZ", evaluate("""
-                const arr = ["YK", 2, "DZ", 4];
+                const arr = ["YK", 2, "DZ", 4]
                 arr[0] + arr[2]
                 """).getAsString());
     }
@@ -72,37 +85,69 @@ public class ScriptTest {
     void function() {
         assertEquals("YKDZ Miao~", evaluate("""
                 function cat(str) {
-                    return str + " Miao~";
+                    return str + " Miao~"
                 }
                 cat("YKDZ")
                 """).getAsString());
         assertEquals("YKDZ Miao~", evaluate("""
                 ((str) => {
-                    return str + " Miao~";
+                    return str + " Miao~"
                 })("YKDZ")
+                """).getAsString());
+        assertEquals("Cat YKDZ (age 12) say miao to you", evaluate("""
+                const miao = (name, age) => {
+                    return `Cat ${name} (age ${age}) say miao to you`
+                }
+                miao{name="YKDZ", age=12}
+                """).getAsString());
+        assertEquals("cart", evaluate("""
+                    function anvil_input(obj) {
+                        return {
+                            then: (cb) => {
+                                cb("result")
+                                return {
+                                    then: (cb2) => cb2()
+                                }
+                            }
+                        }
+                    }
+                    function open_cart() { return "cart" }
+                
+                    anvil_input({
+                      structure: ["1 2 3"]
+                    })
+                      .then((result) => {
+                      })
+                      .then(() => open_cart())
+                """).getAsString());
+        assertEquals("YKDZ Miao~", evaluate("""
+                Future.supply(() => sleep 1000)
+                    .then(() => "YKDZ")
+                    .then((result) => result + " Miao~")
+                    .get()
                 """).getAsString());
     }
 
     @Test
     void loop() {
         assertEquals(45d, evaluate("""
-                let sum = 0;
+                let sum = 0
                 for (let i = 0; i < 10; i += 1) {
-                    sum += i;
+                    sum += i
                 }
                 sum
                 """).getAsBigDecimal().intValue());
         assertEquals(50d, evaluate("""
-                let sum = 0;
+                let sum = 0
                 while (sum < 50) {
-                    sum += 1;
+                    sum += 1
                 }
                 sum
                 """).getAsBigDecimal().intValue());
         assertEquals(20d, evaluate("""
-                let  sum = 0;
+                let sum = 0
                 while (sum < 50) {
-                    sum += 1;
+                    sum += 1
                     if (sum == 20) break;
                 }
                 sum
@@ -122,7 +167,7 @@ public class ScriptTest {
     @Test
     void templateString() {
         assertEquals("Hello World 2", evaluate("""
-                const world = "World";
+                const world = "World"
                 `Hello ${world} ${3 - 1}`
                 """).getAsString());
     }
@@ -130,55 +175,55 @@ public class ScriptTest {
     @Test
     void assignment() {
         assertEquals(5d, evaluate("""
-                const a = 5;
+                const a = 5
                 a
                 """).getAsBigDecimal().intValue());
         assertEquals(7d, evaluate("""
-                let a = 5;
-                a += 2;
+                let a = 5
+                a += 2
                 a
                 """).getAsBigDecimal().intValue());
         assertEquals(3d, evaluate("""
-                let a = 5;
-                a -= 2;
+                let a = 5
+                a -= 2
                 a
                 """).getAsBigDecimal().intValue());
         assertEquals(10d, evaluate("""
-                let a = 5;
-                a *= 2;
+                let a = 5
+                a *= 2
                 a
                 """).getAsBigDecimal().intValue());
         assertEquals(2.5f, evaluate("""
-                let a = 5.0;
-                a /= 2;
+                let a = 5.0
+                a /= 2
                 a
                 """).getAsBigDecimal().floatValue());
         assertEquals(25d, evaluate("""
-                let a = 5;
-                a ^= 2;
+                let a = 5
+                a **= 2
                 a
                 """).getAsBigDecimal().intValue());
         assertEquals(1d, evaluate("""
-                let a = 5;
-                a %= 2;
+                let a = 5
+                a %= 2
                 a
                 """).getAsBigDecimal().intValue());
         assertEquals(1d, evaluate("""
-                let a = 5;
-                a %= 2;
+                let a = 5
+                a %= 2
                 a
                 """).getAsBigDecimal().intValue());
         assertEquals(5d, evaluate("""
-                let a = 4;
-                a := 5;
+                let a = 4
+                a := 5
                 """).getAsBigDecimal().intValue());
     }
 
     @Test
     void unpack() {
         assertEquals(3d, evaluate("""
-                const arr = [1, 2, 3];
-                let [a, b, c] = arr;
+                const arr = [1, 2, 3]
+                let [a, b, c] = arr
                 c
                 """).getAsBigDecimal().intValue());
         assertEquals(4d, evaluate("""
@@ -188,9 +233,25 @@ public class ScriptTest {
                     c: {
                         d: 3
                     }
-                };
-                let { a,  c: { d } } = obj;
+                }
+                let { a,  c: { d } } = obj
                 a + d
                 """).getAsBigDecimal().intValue());
+    }
+
+    @Test
+    void component() {
+        Context ctx = Context.Builder.create()
+                .with("component", new Value(Component.text("Hello World").decorate(TextDecoration.BOLD).color(TextColor.color(255, 255, 255))))
+                .with(new Context.Config(RoundingMode.HALF_UP, RoundingMode.HALF_UP, false, false))
+                .build();
+
+        assertEquals("<bold><white>Hello World</white></bold> :)", evaluate("component + \" :)\"", ctx).toReadableString());
+        assertEquals("<bold><white>Hello World</white></bold> :)", evaluate("`${component} :)`", ctx).toReadableString());
+
+        ctx.setConfig(new Context.Config(RoundingMode.HALF_UP, RoundingMode.HALF_UP, false, true));
+
+        assertEquals("<bold><white>Hello World :)", evaluate("component + \" :)\"", ctx).toReadableString());
+        assertEquals("<bold><white>Hello World :)", evaluate("`${component} :)`", ctx).toReadableString());
     }
 }

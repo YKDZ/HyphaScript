@@ -18,7 +18,7 @@ public class ExportParser implements StatementParser {
         ctx.consume(Token.Type.FROM);
         final Token from = ctx.consume(Token.Type.STRING);
 
-        ctx.consume(Token.Type.FINISH);
+        ctx.consumeStatementEnd();
 
         return new ExportAllFrom(as, from.value(), startToken, ctx.previous());
     }
@@ -27,7 +27,7 @@ public class ExportParser implements StatementParser {
         final Token startToken = ctx.previous();
         final Token name = ctx.consume(Token.Type.IDENTIFIER);
 
-        ctx.consume(Token.Type.FINISH);
+        ctx.consumeStatementEnd();
 
         Token endToken = ctx.previous();
         return new ExportMember(name.value(), startToken, endToken);
@@ -48,13 +48,13 @@ public class ExportParser implements StatementParser {
 
         if (ctx.match(Token.Type.FROM)) return parseExportFrom(exported, startToken, ctx);
 
-        ctx.consume(Token.Type.FINISH);
+        ctx.consumeStatementEnd();
         return new ExportObject(exported, startToken, ctx.previous());
     }
 
     private static @NotNull ASTNode parseExportFrom(@NotNull Map<String, String> exported, @NotNull Token startToken, @NotNull ParseContext ctx) {
         Token from = ctx.consume(Token.Type.STRING);
-        ctx.consume(Token.Type.FINISH);
+        ctx.consumeStatementEnd();
         Token endToken = ctx.previous();
 
         return new ExportFrom(exported, from.value(), startToken, endToken);

@@ -35,7 +35,7 @@ public class ForParser implements StatementParser {
 
         ASTNode afterThought = new Literal();
         if (!ctx.check(Token.Type.RIGHT_PAREN)) {
-            afterThought = ctx.parseStatement();
+            afterThought = ctx.parseExpression(PrecedenceTable.Precedence.LOWEST);
         }
         ctx.consume(Token.Type.RIGHT_PAREN);
 

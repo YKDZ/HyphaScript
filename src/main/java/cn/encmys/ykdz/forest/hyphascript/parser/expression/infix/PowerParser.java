@@ -17,6 +17,7 @@ public class PowerParser implements ExpressionParser.Infix {
     @Override
     public @NotNull ASTNode parse(@NotNull ParseContext ctx, @NotNull ASTNode left) {
         Token op = ctx.consume(Token.Type.POWER);
-        return new Power(left, ctx.parseExpression(precedence()), op, ctx.current());
+        ASTNode right = ctx.parseExpression(precedence());
+        return new Power(left, right, left.getStartToken(), right.getEndToken());
     }
 }

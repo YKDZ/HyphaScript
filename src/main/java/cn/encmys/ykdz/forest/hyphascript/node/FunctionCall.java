@@ -40,14 +40,17 @@ public class FunctionCall extends ASTNode {
 
     @Override
     public @NotNull Reference evaluate(@NotNull Context ctx) {
-        Value functionValue;
         Value targetValue = new Value(InternalObjectManager.OBJECT_PROTOTYPE);
+        Value functionValue;
 
-        // 若 functionName 为空
-        // 则代表 target 本身返回的就是 function
-        // 否则 function 是一个成员访问
         if (functionName.isEmpty()) {
-            functionValue = target.evaluate(ctx).getReferredValue();
+            if (target instanceof MemberAccess ma) {
+                targetValue = ma.getTarget().evaluate(ctx).getReferredValue();
+                String realFunctionName = ma.getMember();
+                functionValue = MemberAccess.findMemberFromTarget(targetValue, realFunctionName, true, this).getReferredValue();
+            } else {
+                functionValue = target.evaluate(ctx).getReferredValue();
+            }
         } else {
             targetValue = target.evaluate(ctx).getReferredValue();
             functionValue = MemberAccess.findMemberFromTarget(targetValue, functionName, true, this).getReferredValue();

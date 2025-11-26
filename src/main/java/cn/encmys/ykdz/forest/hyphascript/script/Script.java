@@ -56,6 +56,7 @@ public class Script {
                     "Parser result not initialized",
                     0,
                     0,
+                    0,
                     null
             );
         }
@@ -113,6 +114,7 @@ public class Script {
                 "Successfully parsed",
                 0,
                 0,
+                0,
                 null
         );
         isParsed = true;
@@ -127,6 +129,7 @@ public class Script {
                 e.getMessage(),
                 e.getLine(),
                 e.getColumn(),
+                1,
                 e
         );
     }
@@ -140,6 +143,7 @@ public class Script {
                 e.getMessage(),
                 e.getToken().line(),
                 e.getToken().column(),
+                e.getToken().value().length(),
                 e
         );
     }

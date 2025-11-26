@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 public class UnaryParser implements ExpressionParser.Prefix {
     @Override
     public @NotNull ASTNode parse(@NotNull ParseContext ctx) {
-        Token op = ctx.consume(Token.Type.MINUS, Token.Type.BANG, Token.Type.TYPEOF);
+        Token op = ctx.consume(Token.Type.MINUS, Token.Type.BANG, Token.Type.TYPEOF, Token.Type.NOT);
         return new UnaryOperation(op.type(), ctx.parseExpression(PrecedenceTable.Precedence.UNARY), op, ctx.previous());
     }
 }

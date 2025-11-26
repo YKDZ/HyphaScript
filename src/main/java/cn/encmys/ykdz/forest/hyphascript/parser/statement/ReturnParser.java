@@ -20,7 +20,7 @@ public class ReturnParser implements StatementParser {
         if (!ctx.check(Token.Type.FINISH)) {
             value = ctx.parseExpression(PrecedenceTable.Precedence.LOWEST);
         }
-        ctx.consume(Token.Type.FINISH);
+        ctx.consumeStatementEnd();
         Token endToken = ctx.previous();
         return new Return(value, startToken, endToken);
     }

@@ -26,7 +26,7 @@ public class ArrayAccessParser implements ExpressionParser.Infix {
 
         Token rBracket = ctx.consume(Token.Type.RIGHT_BRACKET);
 
-        return new ArrayAccess(left, from, to, step, lBracket, rBracket);
+        return new ArrayAccess(left, from, to, step, left.getStartToken(), rBracket);
     }
 
     private @NotNull ASTNode parseSliceComponent(@NotNull ParseContext ctx) {

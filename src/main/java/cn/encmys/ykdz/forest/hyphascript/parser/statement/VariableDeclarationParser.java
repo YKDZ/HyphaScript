@@ -43,7 +43,7 @@ public class VariableDeclarationParser implements StatementParser {
         if (ctx.match(Token.Type.EQUALS, Token.Type.COLON_EQUALS, Token.Type.PLUS_EQUALS, Token.Type.MINUS_EQUALS, Token.Type.DIV_EQUALS, Token.Type.MUL_EQUALS, Token.Type.MOD_EQUALS)) {
             initValue = ctx.parseExpression(PrecedenceTable.Precedence.LOWEST);
         }
-        if (ctx.check(Token.Type.FINISH)) ctx.consume(Token.Type.FINISH);
+        ctx.consumeStatementEnd();
 
         Token endToken = ctx.previous();
 
@@ -61,7 +61,7 @@ public class VariableDeclarationParser implements StatementParser {
         // 解析等号和右侧的值
         ctx.consume(Token.Type.EQUALS);
         ASTNode from = ctx.parseExpression(PrecedenceTable.Precedence.LOWEST);
-        ctx.consume(Token.Type.FINISH);
+        ctx.consumeStatementEnd();
 
         Token endToken = ctx.previous();
 

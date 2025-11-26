@@ -5,8 +5,6 @@ import cn.encmys.ykdz.forest.hyphascript.token.Token;
 import cn.encmys.ykdz.forest.hyphascript.value.Reference;
 import cn.encmys.ykdz.forest.hyphascript.value.Value;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.TextDecoration;
-import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -22,22 +20,26 @@ public class TemplateString extends ASTNode {
         this.isOptional = isOptional;
     }
 
-    private static @NotNull Reference buildComponent(@NotNull List<Value> parts, boolean isOptional) {
-        Component result = Component.empty();
+    private static @NotNull Reference buildComponent(@NotNull List<Value> parts, boolean isOptional, boolean overflow) {
+        Component result = null;
         for (Value value : parts) {
             switch (value.getType()) {
                 case VOID -> {
                 }
                 case NULL -> {
                     if (isOptional) return new Reference(new Value(null));
-                    result = result.append(Component.text("null"));
                 }
-                case ADVENTURE_COMPONENT -> result = result.append(value.getAsAdventureComponent());
-                default ->
-                        result = result.append(MiniMessage.miniMessage().deserialize(value.getAsString()).decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE));
+                default -> {
+                    Component comp = value.getAsAdventureComponent();
+                    if (result == null) {
+                        result = overflow ? comp : Component.empty().append(comp);
+                    } else {
+                        result = result.append(comp);
+                    }
+                }
             }
         }
-        return new Reference(new Value(result));
+        return new Reference(new Value(result == null ? Component.empty() : result));
     }
 
     private static @NotNull Reference buildString(@NotNull List<Value> parts, boolean isOptional) {
@@ -48,7 +50,6 @@ public class TemplateString extends ASTNode {
                 }
                 case NULL -> {
                     if (isOptional) return new Reference(new Value(null));
-                    result.append("null");
                 }
                 default -> result.append(value.getAsString());
             }
@@ -63,6 +64,6 @@ public class TemplateString extends ASTNode {
                 .toList();
         boolean isComponent = partValues.stream()
                 .anyMatch(value -> value.isType(Value.Type.ADVENTURE_COMPONENT));
-        return isComponent ? buildComponent(partValues, isOptional) : buildString(partValues, isOptional);
+        return isComponent ? buildComponent(partValues, isOptional, ctx.getConfig().componentDecorationOverflow()) : buildString(partValues, isOptional);
     }
 }
