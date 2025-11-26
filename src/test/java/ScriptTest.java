@@ -6,7 +6,7 @@ import cn.encmys.ykdz.forest.hyphascript.value.Value;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class ScriptTest {
     private static @NotNull Value evaluate(@NotNull String script) throws ValueException {
@@ -38,6 +38,9 @@ public class ScriptTest {
 
         assertEquals("ab1", evaluate("\"ab\" + 1").getAsString());
         assertEquals("abed", evaluate("\"ab\" + \"ed\"").getAsString());
+
+        assertEquals(5, evaluate("5 & 7").getAsBigDecimal().intValue());
+        assertEquals(5, evaluate("5 | 1").getAsBigDecimal().intValue());
     }
 
     @Test
@@ -95,6 +98,99 @@ public class ScriptTest {
                     sum += 1;
                 }
                 sum
+                """).getAsBigDecimal().intValue());
+        assertEquals(20d, evaluate("""
+                let  sum = 0;
+                while (sum < 50) {
+                    sum += 1;
+                    if (sum == 20) break;
+                }
+                sum
+                """).getAsBigDecimal().intValue());
+    }
+
+    @Test
+    void logic() {
+        assertFalse(evaluate("1 == 2").getAsBoolean());
+        assertTrue(evaluate("1 != 2").getAsBoolean());
+        assertTrue(evaluate("1 < 2").getAsBoolean());
+        assertTrue(evaluate("3 > 2").getAsBoolean());
+        assertFalse(evaluate("true && false").getAsBoolean());
+        assertTrue(evaluate("true || false").getAsBoolean());
+    }
+
+    @Test
+    void templateString() {
+        assertEquals("Hello World 2", evaluate("""
+                const world = "World";
+                `Hello ${world} ${3 - 1}`
+                """).getAsString());
+    }
+
+    @Test
+    void assignment() {
+        assertEquals(5d, evaluate("""
+                const a = 5;
+                a
+                """).getAsBigDecimal().intValue());
+        assertEquals(7d, evaluate("""
+                let a = 5;
+                a += 2;
+                a
+                """).getAsBigDecimal().intValue());
+        assertEquals(3d, evaluate("""
+                let a = 5;
+                a -= 2;
+                a
+                """).getAsBigDecimal().intValue());
+        assertEquals(10d, evaluate("""
+                let a = 5;
+                a *= 2;
+                a
+                """).getAsBigDecimal().intValue());
+        assertEquals(2.5f, evaluate("""
+                let a = 5.0;
+                a /= 2;
+                a
+                """).getAsBigDecimal().floatValue());
+        assertEquals(25d, evaluate("""
+                let a = 5;
+                a ^= 2;
+                a
+                """).getAsBigDecimal().intValue());
+        assertEquals(1d, evaluate("""
+                let a = 5;
+                a %= 2;
+                a
+                """).getAsBigDecimal().intValue());
+        assertEquals(1d, evaluate("""
+                let a = 5;
+                a %= 2;
+                a
+                """).getAsBigDecimal().intValue());
+        assertEquals(5d, evaluate("""
+                let a = 4;
+                a := 5;
+                """).getAsBigDecimal().intValue());
+    }
+
+    @Test
+    void unpack() {
+        assertEquals(3d, evaluate("""
+                const arr = [1, 2, 3];
+                let [a, b, c] = arr;
+                c
+                """).getAsBigDecimal().intValue());
+        assertEquals(4d, evaluate("""
+                const obj = {
+                    a: 1,
+                    b: 2,
+                    c: {
+                        d: 3
+                    }
+                };
+                let { a,  c: { d } } = obj;
+                a + d
                 """).getAsBigDecimal().intValue());
     }
 }
