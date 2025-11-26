@@ -20,7 +20,7 @@ public class MapFunctionCallParser implements ExpressionParser.Infix {
 
     @Override
     public @NotNull ASTNode parse(@NotNull ParseContext ctx, @NotNull ASTNode left) {
-        Token lParen = ctx.consume(Token.Type.LEFT_BRACE);
+        ctx.consume(Token.Type.LEFT_BRACE);
         Map<String, ASTNode> args = parseArguments(ctx);
         Token rParen = ctx.consume(Token.Type.RIGHT_BRACE);
 

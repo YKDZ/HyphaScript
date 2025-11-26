@@ -17,7 +17,7 @@ public class ArrayAccessParser implements ExpressionParser.Infix {
 
     @Override
     public @NotNull ASTNode parse(@NotNull ParseContext ctx, @NotNull ASTNode left) {
-        Token lBracket = ctx.consume(Token.Type.LEFT_BRACKET);
+        ctx.consume(Token.Type.LEFT_BRACKET);
 
         // 解析 from、to、step，允许为空
         ASTNode from = parseSliceComponent(ctx);

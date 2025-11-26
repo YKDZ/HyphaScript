@@ -16,7 +16,7 @@ public class ConditionalOperatorParser implements ExpressionParser.Infix {
 
     @Override
     public @NotNull ASTNode parse(@NotNull ParseContext ctx, @NotNull ASTNode left) {
-        Token startToken = ctx.consume(Token.Type.QUESTION);
+        ctx.consume(Token.Type.QUESTION);
         ASTNode thenBranch = ctx.parseExpression(precedence());
         ctx.consume(Token.Type.COLON);
         ASTNode elseBranch = ctx.parseExpression(precedence());

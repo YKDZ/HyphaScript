@@ -122,7 +122,7 @@ public class Lexer {
 
         // Check for operators that usually continue a statement
         return switch (nextChar) {
-            case '(', ')', '[', ']', '{', '}', '+', '-', '*', '/', '%', '=', '<', '>', '!', '&', '|', '?', ':', '.',
+            case '(', ')', '[', ']', '{', '+', '-', '*', '/', '%', '=', '<', '>', '!', '&', '|', '?', ':', '.',
                  ',' -> false;
             default -> {
                 // Check for keywords that shouldn't be preceded by a semicolon (like else, catch, finally, while)
