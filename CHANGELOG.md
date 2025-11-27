@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.1.3-Beta 2025.11.27
+
+### Added
+
+- java function for internal usage
+- `export function xxx() {}` support
+
+### Changed
+
+-
+
+### Fixed
+
+- `export let xxx` not work
+- function name now in every call
+- import context from file not to global context but to `OBJECT_PROTOTYPE`
+
 ## 0.1.2-Beta 2025.11.26
 
 ### Added

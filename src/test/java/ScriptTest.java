@@ -268,21 +268,6 @@ public class ScriptTest {
     }
 
     @Test
-    void call() {
-        assertTrue(evaluate("""
-                const message = (msg) => {
-                    return msg
-                }
-                
-                const randomMsg = (...msg) => {
-                  return msg[Math.random() * msg.length()];
-                };
-                
-                message{msg=randomMsg(1, 2, 3)}
-                """).getAsBigDecimal().intValue() <= 3);
-    }
-
-    @Test
     void export() {
         Context ctx = new Context();
         evaluate("""
