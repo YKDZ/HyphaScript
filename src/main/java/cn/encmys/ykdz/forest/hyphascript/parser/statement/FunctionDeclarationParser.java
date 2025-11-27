@@ -52,13 +52,17 @@ public class FunctionDeclarationParser implements StatementParser {
 
     @Override
     public boolean canParse(@NotNull ParseContext ctx) {
-        return ctx.match(Token.Type.FUNCTION);
+        return ctx.check(Token.Type.FUNCTION);
     }
 
     @Override
     public @NotNull ASTNode parse(@NotNull ParseContext ctx) {
-        Token functionToken = ctx.previous();
-        Function function = parseFunction(ctx, ctx.consume(Token.Type.IDENTIFIER).value());
-        return new FunctionDeclaration(function, functionToken, functionToken);
+        boolean isExported = ctx.previous().type() == Token.Type.EXPORT;
+
+        Token functionToken = ctx.consume(Token.Type.FUNCTION);
+        Token functionName = ctx.consume(Token.Type.IDENTIFIER);
+
+        Function function = parseFunction(ctx, functionName.value());
+        return new FunctionDeclaration(function, isExported, functionToken, functionName);
     }
 }

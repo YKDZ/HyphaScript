@@ -69,6 +69,8 @@ public class ExportParser implements StatementParser {
     public @NotNull ASTNode parse(@NotNull ParseContext ctx) {
         if (ctx.check(Token.Type.CONST, Token.Type.LET)) {
             return new VariableDeclarationParser().parse(ctx);
+        } else if (ctx.check(Token.Type.FUNCTION)) {
+            return new FunctionDeclarationParser().parse(ctx);
         }
 
         if (ctx.check(Token.Type.LEFT_BRACE)) {

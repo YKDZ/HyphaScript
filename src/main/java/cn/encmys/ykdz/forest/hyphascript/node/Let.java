@@ -28,6 +28,7 @@ public class Let extends ASTNode {
         init.setConst(false);
         try {
             ctx.declareMember(name, init);
+            if (isExported) ctx.setExported(name);
         } catch (Exception e) {
             throw new EvaluateException(this, "Error declaring reference " + name + " in " + ctx, e);
         }
