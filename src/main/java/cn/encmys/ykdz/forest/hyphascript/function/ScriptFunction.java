@@ -40,15 +40,15 @@ public class ScriptFunction extends ScriptObject implements Function, Cloneable 
     }
 
     @Override
-    public @NotNull Reference call(@NotNull Value targetValue, @NotNull List<Value> arguments, @NotNull Context ctx) {
-        return executeCall(targetValue, ctx, localContext ->
+    public @NotNull Reference call(@NotNull Value target, @NotNull List<Value> arguments, @NotNull Context ctx) {
+        return executeCall(target, ctx, localContext ->
                 FunctionUtils.injectArguments(localContext, this.parameters, arguments, uncertainParameter)
         );
     }
 
     @Override
-    public @NotNull Reference call(@NotNull Value targetValue, @NotNull Map<String, Value> arguments, @NotNull Context ctx) {
-        return executeCall(targetValue, ctx, localContext ->
+    public @NotNull Reference call(@NotNull Value target, @NotNull Map<String, Value> arguments, @NotNull Context ctx) {
+        return executeCall(target, ctx, localContext ->
                 FunctionUtils.injectArguments(localContext, this.parameters, arguments, uncertainParameter)
         );
     }

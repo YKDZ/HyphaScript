@@ -13,9 +13,9 @@ import java.util.List;
 import java.util.Map;
 
 public interface Function {
-    @NotNull Reference call(@NotNull Value targetValue, @NotNull List<Value> parameters, @NotNull Context ctx);
+    @NotNull Reference call(@NotNull Value target, @NotNull List<Value> parameters, @NotNull Context ctx);
 
-    @NotNull Reference call(@NotNull Value targetValue, @NotNull Map<String, Value> parameters, @NotNull Context ctx);
+    @NotNull Reference call(@NotNull Value target, @NotNull Map<String, Value> parameters, @NotNull Context ctx);
 
     @NotNull String getName();
 

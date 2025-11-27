@@ -77,7 +77,7 @@ public class FunctionCall extends ASTNode {
                     throw new EvaluateException(this, "Java method can only be called with list parameters");
 
                 // MethodHandle 的参数列表的第一个参数是实例本身（如果是实例方法）
-                Object[] evaluatedArgs = Stream.concat(Stream.of(targetValue.getValue()), argList.stream()
+                final Object[] evaluatedArgs = Stream.concat(Stream.of(targetValue.getValue()), argList.stream()
                                 .map(arg -> arg.evaluate(ctx).getReferredValue().getValue()))
                         .toArray();
 
@@ -125,7 +125,7 @@ public class FunctionCall extends ASTNode {
     }
 
     private @NotNull Reference callFunctionWithParaList(@NotNull Value target, @NotNull Function function, @NotNull List<ASTNode> paras, @NotNull Context ctx) {
-        List<@NotNull Value> evaluatedArgs = paras.stream()
+        final List<@NotNull Value> evaluatedArgs = paras.stream()
                 .map(arg -> arg.evaluate(ctx).getReferredValue())
                 .toList();
         return callFunction(target, function, evaluatedArgs, ctx);
