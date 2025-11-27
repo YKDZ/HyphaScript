@@ -5,7 +5,6 @@ import cn.encmys.ykdz.forest.hyphascript.oop.internal.InternalObjectManager;
 import cn.encmys.ykdz.forest.hyphascript.utils.FileUtils;
 import cn.encmys.ykdz.forest.hyphascript.value.Value;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -32,7 +31,7 @@ public class ScriptManager {
      * @param namespace Namespace that the script will be registered in
      * @param scriptStr Content of the script
      * @return Created Script
-     * @see Context#GLOBAL_OBJECT
+     * @see InternalObjectManager#GLOBAL_OBJECT
      */
     @NotNull
     public static Script createScript(@NotNull String namespace, @NotNull String scriptStr, @NotNull Context context) {
@@ -49,9 +48,8 @@ public class ScriptManager {
         return scripts.get(namespace);
     }
 
-    @Nullable
-    public static Script putScript(@NotNull String namespace, @NotNull Script script) {
-        return scripts.put(namespace, script);
+    public static void putScript(@NotNull String namespace, @NotNull Script script) {
+        scripts.put(namespace, script);
     }
 
     public static boolean hasScript(@NotNull String namespace) {
@@ -125,11 +123,11 @@ public class ScriptManager {
                 registeredScript.getContext().getExportedMembers().forEach((name, reference) -> {
                     if (name.equals("Config")) return;
                     memberGlobalScriptImported.get(namespace).add(name);
-                    InternalObjectManager.OBJECT_PROTOTYPE.declareMember(name, reference.getReferredValue());
+                    InternalObjectManager.GLOBAL_OBJECT.declareMember(name, reference.getReferredValue());
                 });
             } else {
                 memberGlobalScriptImported.get(namespace).add(namespace);
-                InternalObjectManager.OBJECT_PROTOTYPE.declareMember(namespace, new Value(registeredScript.getContext().getExportedMembers()));
+                InternalObjectManager.GLOBAL_OBJECT.declareMember(namespace, new Value(registeredScript.getContext().getExportedMembers()));
             }
         }
     }
@@ -138,7 +136,6 @@ public class ScriptManager {
         List<String> namespaces = new ArrayList<>(scripts.keySet());
         namespaces.forEach(ScriptManager::unloadScript);
     }
-
 
     public static void unloadScript(@NotNull String namespace) {
         final List<String> members = memberGlobalScriptImported.get(namespace);
