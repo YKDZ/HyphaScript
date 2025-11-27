@@ -7,7 +7,7 @@ plugins {
 }
 
 group = "cn.encmys.ykdz.forest"
-version = "0.1.2-Beta"
+version = "0.1.3-Beta"
 
 repositories {
     mavenLocal()
