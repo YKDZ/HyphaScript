@@ -21,21 +21,24 @@ import java.util.stream.Stream;
 public class FunctionCall extends ASTNode {
     private final @NotNull ASTNode target;
     private final @NotNull String functionName;
+    private final boolean isMemberAccess;
     private @Nullable List<ASTNode> argList;
     private @Nullable Map<String, ASTNode> argMap;
 
-    public FunctionCall(@NotNull ASTNode target, @NotNull String functionName, @NotNull List<ASTNode> argList, @NotNull Token startToken, @NotNull Token endToken) {
+    public FunctionCall(@NotNull ASTNode target, @NotNull String functionName, @NotNull List<ASTNode> argList, @NotNull Token startToken, @NotNull Token endToken, boolean isMemberAccess) {
         super(startToken, endToken);
         this.target = target;
         this.functionName = functionName;
         this.argList = argList;
+        this.isMemberAccess = isMemberAccess;
     }
 
-    public FunctionCall(@NotNull ASTNode target, @NotNull String functionName, @NotNull Map<String, ASTNode> argMap, @NotNull Token startToken, @NotNull Token endToken) {
+    public FunctionCall(@NotNull ASTNode target, @NotNull String functionName, @NotNull Map<String, ASTNode> argMap, @NotNull Token startToken, @NotNull Token endToken, boolean isMemberAccess) {
         super(startToken, endToken);
         this.target = target;
         this.functionName = functionName;
         this.argMap = argMap;
+        this.isMemberAccess = isMemberAccess;
     }
 
     @Override
@@ -43,17 +46,11 @@ public class FunctionCall extends ASTNode {
         Value targetValue = new Value(InternalObjectManager.OBJECT_PROTOTYPE);
         Value functionValue;
 
-        if (functionName.isEmpty()) {
-            if (target instanceof MemberAccess ma) {
-                targetValue = ma.getTarget().evaluate(ctx).getReferredValue();
-                String realFunctionName = ma.getMember();
-                functionValue = MemberAccess.findMemberFromTarget(targetValue, realFunctionName, true, this).getReferredValue();
-            } else {
-                functionValue = target.evaluate(ctx).getReferredValue();
-            }
-        } else {
+        if (isMemberAccess) {
             targetValue = target.evaluate(ctx).getReferredValue();
             functionValue = MemberAccess.findMemberFromTarget(targetValue, functionName, true, this).getReferredValue();
+        } else {
+            functionValue = target.evaluate(ctx).getReferredValue();
         }
 
         return switch (functionValue.getType()) {

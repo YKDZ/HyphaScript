@@ -96,10 +96,6 @@ public class ScriptObject implements Cloneable {
         Value value = findMember(name).getReferredValue();
         Value.Type target = Value.Type.fromClass(type);
 
-        if (value.getType() != Value.Type.fromClass(type)) {
-            return Optional.empty();
-        }
-
         try {
             @SuppressWarnings("unchecked")
             T casted = (T) value.getAs(target);

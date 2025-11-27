@@ -2,6 +2,7 @@ package cn.encmys.ykdz.forest.hyphascript.parser.expression.infix;
 
 import cn.encmys.ykdz.forest.hyphascript.node.ASTNode;
 import cn.encmys.ykdz.forest.hyphascript.node.FunctionCall;
+import cn.encmys.ykdz.forest.hyphascript.node.Identifier;
 import cn.encmys.ykdz.forest.hyphascript.node.MemberAccess;
 import cn.encmys.ykdz.forest.hyphascript.parser.ParseContext;
 import cn.encmys.ykdz.forest.hyphascript.parser.PrecedenceTable;
@@ -25,10 +26,12 @@ public class MapFunctionCallParser implements ExpressionParser.Infix {
         Token rParen = ctx.consume(Token.Type.RIGHT_BRACE);
 
         if (left instanceof MemberAccess memberAccess) {
-            return new FunctionCall(memberAccess.getTarget(), memberAccess.getMember(), args, left.getStartToken(), rParen);
+            return new FunctionCall(memberAccess.getTarget(), memberAccess.getMember(), args, left.getStartToken(), rParen, true);
+        } else if (left instanceof Identifier identifier) {
+            return new FunctionCall(left, identifier.getName(), args, left.getStartToken(), rParen, false);
         }
 
-        return new FunctionCall(left, "", args, left.getStartToken(), rParen);
+        return new FunctionCall(left, "", args, left.getStartToken(), rParen, false);
     }
 
     private @NotNull Map<String, ASTNode> parseArguments(@NotNull ParseContext ctx) {

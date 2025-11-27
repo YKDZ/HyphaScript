@@ -14,6 +14,10 @@ public class Identifier extends ASTNode {
         this.name = name;
     }
 
+    public @NotNull String getName() {
+        return name;
+    }
+
     @Override
     public @NotNull Reference evaluate(@NotNull Context ctx) {
         if (name.equals("this") && !ctx.hasMember("this")) return new Reference(new Value(ctx));
