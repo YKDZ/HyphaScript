@@ -254,4 +254,44 @@ public class ScriptTest {
         assertEquals("<bold><white>Hello World :)", evaluate("component + \" :)\"", ctx).toReadableString());
         assertEquals("<bold><white>Hello World :)", evaluate("`${component} :)`", ctx).toReadableString());
     }
+
+    @Test
+    void config() {
+        Value result = evaluate("""
+                (() => {
+                    return {
+                        title: "Title"
+                    }
+                })()
+                """);
+        assertTrue(result.getAsScriptObject().findMember("title", Component.class).isPresent());
+    }
+
+    @Test
+    void call() {
+        assertTrue(evaluate("""
+                const message = (msg) => {
+                    return msg
+                }
+                
+                const randomMsg = (...msg) => {
+                  return msg[Math.random() * msg.length()];
+                };
+                
+                message{msg=randomMsg(1, 2, 3)}
+                """).getAsBigDecimal().intValue() <= 3);
+    }
+
+    @Test
+    void export() {
+        Context ctx = new Context();
+        evaluate("""
+                export const a = 5;
+                export function test() {
+                    return 5;
+                }
+                export let b = 5;
+                """, ctx);
+        assertEquals(3, ctx.getExportedMembers().size());
+    }
 }
