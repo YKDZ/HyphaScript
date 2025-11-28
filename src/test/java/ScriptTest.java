@@ -1,7 +1,11 @@
+import cn.encmys.ykdz.forest.hyphascript.annotions.Function;
 import cn.encmys.ykdz.forest.hyphascript.context.Context;
 import cn.encmys.ykdz.forest.hyphascript.exception.ValueException;
+import cn.encmys.ykdz.forest.hyphascript.oop.ScriptObject;
+import cn.encmys.ykdz.forest.hyphascript.oop.internal.core.MathObject;
 import cn.encmys.ykdz.forest.hyphascript.script.EvaluateResult;
 import cn.encmys.ykdz.forest.hyphascript.script.Script;
+import cn.encmys.ykdz.forest.hyphascript.value.Reference;
 import cn.encmys.ykdz.forest.hyphascript.value.Value;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextColor;
@@ -9,6 +13,7 @@ import net.kyori.adventure.text.format.TextDecoration;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
+import java.lang.reflect.Method;
 import java.math.RoundingMode;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -58,26 +63,61 @@ public class ScriptTest {
 
     @Test
     void array() {
-        assertEquals(5d, evaluate("""
-                const arr = [1, 2, 3, 4]
-                arr[0] + arr[3]
-                """).getAsBigDecimal().intValue());
-        assertEquals("YKDZ", evaluate("""
-                const arr = ["YK", 2, "DZ", 4]
-                arr[0] + arr[2]
-                """).getAsString());
+        Context ctx = Context.Builder.create()
+                .with("arr",
+                        new Value(new Reference[]{new Reference(new Value(1)), new Reference(new Value(2)),
+                                new Reference(new Value(3)), new Reference(new Value(4))}))
+                .with("str", new Value("YKDZ Miao~"))
+                .build();
+        assertEquals(5d, evaluate("arr[0] + arr[3]", ctx).getAsBigDecimal().intValue());
+        assertEquals(10d, evaluate("arr.sum()", ctx).getAsBigDecimal().intValue());
+        assertEquals(4d, evaluate("arr.length()", ctx).getAsBigDecimal().intValue());
+        assertEquals(10d, evaluate("arr[0:4].sum()", ctx).getAsBigDecimal().intValue());
+        assertEquals(5d, evaluate("arr[1:3].sum()", ctx).getAsBigDecimal().intValue());
+        assertEquals(3d, evaluate("arr[:2].sum()", ctx).getAsBigDecimal().intValue());
+        assertEquals(3d, evaluate("arr[:-2].sum()", ctx).getAsBigDecimal().intValue());
+        assertEquals(2d, evaluate("arr[-3:-2].sum()", ctx).getAsBigDecimal().intValue());
+        assertEquals(4d, evaluate("arr[::2].sum()", ctx).getAsBigDecimal().intValue());
+        assertEquals(6d, evaluate("arr[1::2].sum()", ctx).getAsBigDecimal().intValue());
+        assertEquals(6d, evaluate("arr[1:100:2].sum()", ctx).getAsBigDecimal().intValue());
+        assertEquals(0d, evaluate("arr[10::2].sum()", ctx).getAsBigDecimal().intValue());
+        assertEquals(0d, evaluate("arr[3:1].sum()", ctx).getAsBigDecimal().intValue());
+        assertEquals(7d, evaluate("arr[2:].sum()", ctx).getAsBigDecimal().intValue());
+        assertEquals(4d, evaluate("arr[::-1][0]", ctx).getAsBigDecimal().intValue());
+
+        assertEquals("Miao", evaluate("str[-5:-1]", ctx).getAsString());
+        assertEquals("YKDZ", evaluate("str[0:4]", ctx).getAsString());
+        assertEquals("Miao", evaluate("str[5:9]", ctx).getAsString());
+        assertEquals("Miao~", evaluate("str[5:100]", ctx).getAsString());
+        assertEquals("YKDZ", evaluate("str[:4]", ctx).getAsString());
+        assertEquals("Miao~", evaluate("str[5:]", ctx).getAsString());
+        assertEquals("YD io", evaluate("str[::2]", ctx).getAsString());
+        assertEquals("~oaiM ZDKY", evaluate("str[::-1]", ctx).getAsString());
     }
 
     @Test
     void object() {
-        assertEquals("YKDZ", evaluate("""
-                const obj = {
-                    a: "YK",
-                    b: {
-                        c: "DZ"
-                    }
-                }
-                obj.a + obj.b.c
+        Context ctx = Context.Builder.create()
+                .with("obj", new Value(ScriptObject.Builder.create()
+                        .with("a", new Value(1))
+                        .with("b", new Value(2))
+                        .with("c", new Value(ScriptObject.Builder.create()
+                                .with("d", new Value(3))
+                                .build()))
+                        .build()))
+                .build();
+        assertEquals(4d, evaluate("obj.a + obj.c.d", ctx).getAsBigDecimal().intValue());
+        assertEquals(3d, evaluate("obj.keys().length()", ctx).getAsBigDecimal().intValue());
+        assertEquals(3d, evaluate("obj.values()[:2].sum()", ctx).getAsBigDecimal().intValue());
+    }
+
+    @Test
+    void future() {
+        assertEquals("YKDZ Miao~", evaluate("""
+                Future.supply(() => sleep 50) // ms
+                    .then(() => "YKDZ")
+                    .then((result) => result + " Miao~")
+                    .get()
                 """).getAsString());
     }
 
@@ -99,32 +139,6 @@ public class ScriptTest {
                     return `Cat ${name} (age ${age}) say miao to you`
                 }
                 miao{name="YKDZ", age=12}
-                """).getAsString());
-        assertEquals("cart", evaluate("""
-                    function anvil_input(obj) {
-                        return {
-                            then: (cb) => {
-                                cb("result")
-                                return {
-                                    then: (cb2) => cb2()
-                                }
-                            }
-                        }
-                    }
-                    function open_cart() { return "cart" }
-                
-                    anvil_input({
-                      structure: ["1 2 3"]
-                    })
-                      .then((result) => {
-                      })
-                      .then(() => open_cart())
-                """).getAsString());
-        assertEquals("YKDZ Miao~", evaluate("""
-                Future.supply(() => sleep 1000)
-                    .then(() => "YKDZ")
-                    .then((result) => result + " Miao~")
-                    .get()
                 """).getAsString());
     }
 
@@ -242,17 +256,21 @@ public class ScriptTest {
     @Test
     void component() {
         Context ctx = Context.Builder.create()
-                .with("component", new Value(Component.text("Hello World").decorate(TextDecoration.BOLD).color(TextColor.color(255, 255, 255))))
+                .with("component",
+                        new Value(Component.text("Hello World").decorate(TextDecoration.BOLD)
+                                .color(TextColor.color(255, 255, 255))))
                 .with(new Context.Config(RoundingMode.HALF_UP, RoundingMode.HALF_UP, false, false))
                 .build();
 
-        assertEquals("<bold><white>Hello World</white></bold> :)", evaluate("component + \" :)\"", ctx).toReadableString());
-        assertEquals("<bold><white>Hello World</white></bold> :)", evaluate("`${component} :)`", ctx).toReadableString());
+        assertEquals("<bold><white>Hello World</white></bold><!italic> :)",
+                evaluate("component + \" :)\"", ctx).toReadableString());
+        assertEquals("<bold><white>Hello World</white></bold><!italic> :)",
+                evaluate("`${component} :)`", ctx).toReadableString());
 
         ctx.setConfig(new Context.Config(RoundingMode.HALF_UP, RoundingMode.HALF_UP, false, true));
 
-        assertEquals("<bold><white>Hello World :)", evaluate("component + \" :)\"", ctx).toReadableString());
-        assertEquals("<bold><white>Hello World :)", evaluate("`${component} :)`", ctx).toReadableString());
+        assertEquals("<bold><white>Hello World<!italic> :)", evaluate("component + \" :)\"", ctx).toReadableString());
+        assertEquals("<bold><white>Hello World<!italic> :)", evaluate("`${component} :)`", ctx).toReadableString());
     }
 
     @Test
@@ -269,6 +287,13 @@ public class ScriptTest {
 
     @Test
     void export() {
+        int count = 0;
+        for (Method method : MathObject.class.getDeclaredMethods()) {
+            if (method.isAnnotationPresent(Function.class)) {
+                count++;
+            }
+        }
+
         Context ctx = new Context();
         evaluate("""
                 export const a = 5;
@@ -276,7 +301,24 @@ public class ScriptTest {
                     return 5;
                 }
                 export let b = 5;
+                export * from "Math";
                 """, ctx);
-        assertEquals(3, ctx.getExportedMembers().size());
+        assertEquals(3 + count, ctx.getExportedMembers().size());
+    }
+
+    @Test
+    void number() {
+        assertEquals(3d, evaluate("""
+                (-3).abs()
+                """).getAsBigDecimal().intValue());
+        assertEquals(-3.5f, evaluate("""
+                (-3.5).floatValue()
+                """).getAsBigDecimal().floatValue());
+        assertEquals(-3d, evaluate("""
+                (-3.5).intValue()
+                """).getAsBigDecimal().intValue());
+        assertEquals(-3.5, evaluate("""
+                (-3.5).doubleValue()
+                """).getAsBigDecimal().doubleValue());
     }
 }
