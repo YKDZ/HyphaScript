@@ -31,13 +31,6 @@ public class MathObject extends InternalObject {
     }
 
     @Static
-    @Function("abs")
-    public static BigDecimal abs(@NotNull Context ctx) {
-        BigDecimal target = ctx.findMember("target").getReferredValue().getAsBigDecimal();
-        return target.abs();
-    }
-
-    @Static
     @Function("round")
     public static BigDecimal round(@NotNull Context ctx) {
         BigDecimal target = ctx.findMember("target").getReferredValue().getAsBigDecimal();

@@ -64,4 +64,14 @@ public class NumberObject extends InternalObject {
             return 0d;
         }
     }
+
+    @Function("abs")
+    public static BigDecimal abs(@NotNull Context ctx) {
+        try {
+            BigDecimal decimal = ctx.findMember("this").getReferredValue().getAsBigDecimal();
+            return decimal.abs();
+        } catch (Exception e) {
+            return BigDecimal.ZERO;
+        }
+    }
 }
