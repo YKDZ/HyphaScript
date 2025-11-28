@@ -2,10 +2,23 @@
 
 English | [简体中文](README_ZH_CN.md)
 
-## 介绍
+## Introduction
 
-一个运行在 JVM 平台的，语法类似 JS 的轻量级脚本语言，最初被设计用于为 Minecraft Paper 插件的 `.yml` 配置添加动态特性。
+A lightweight JavaScript-like scripting language running on the JVM, originally designed to add dynamic functionality to `.yml` configuration files in Minecraft Paper plugins.
 
-## 特性
+Its Abstract Syntax Tree (AST) is built using a custom implementation of the Pratt Parser.
 
-- 原生的 Adventure Component 模板字符串和 `+` 运算等0‘
+## Features
+
+- Native support for Adventure API `Component` template strings and `+` operations
+- Uses `BigDecimal` for numeric storage
+- Supports array and string slicing syntax
+- Supports configuration-friendly function calls like `func{arg1="1", arg2="2"}`
+- Simple lexical scoping mechanism
+- Allows registering native Java functions via `ScriptObject` and `MethodHandle`
+- Includes built-in utility functions for interacting with the Minecraft environment, such as `message(msg)` and `tp_to_player(player_name)`
+
+## Use Cases
+
+- [Deserializing specific objects from configuration](https://github.com/YKDZ/HyphaShop/blob/8408c229aa77dcb00f3aeecff179406be44f9876/plugin/src/main/java/cn/encmys/ykdz/forest/hyphashop/utils/ConfigUtils.java#L449)
+- [Allowing users to configure how predefined functions are executed](https://github.com/YKDZ/HyphaShop/blob/8408c229aa77dcb00f3aeecff179406be44f9876/plugin/src/main/java/cn/encmys/ykdz/forest/hyphashop/script/pack/HyphaShopActionObject.java#L48)
