@@ -29,8 +29,8 @@ public class ScriptFunction extends ScriptObject implements Function, Cloneable 
 
     public ScriptFunction(@NotNull String name, @NotNull LinkedHashMap<String, ASTNode> parameters, @NotNull String uncertainParameter, @NotNull ASTNode body, @NotNull Context capturedContext) {
         super(InternalObjectManager.FUNCTION_PROTOTYPE);
-        super.declareMember("prototype", new Reference(new Value(new ScriptObject.Builder()
-                .withMember("constructor", new Reference(new Value(this)))
+        super.declareMember("prototype", new Reference(new Value(ScriptObject.Builder.create()
+                .with("constructor", new Value(this))
                 .build())));
         this.name = name;
         this.parameters = parameters;

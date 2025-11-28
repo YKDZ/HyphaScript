@@ -1,9 +1,11 @@
 package cn.encmys.ykdz.forest.hyphascript.oop;
 
+import cn.encmys.ykdz.forest.hyphascript.context.Context;
 import cn.encmys.ykdz.forest.hyphascript.exception.ScriptObjectException;
 import cn.encmys.ykdz.forest.hyphascript.oop.internal.InternalObjectManager;
 import cn.encmys.ykdz.forest.hyphascript.value.Reference;
 import cn.encmys.ykdz.forest.hyphascript.value.Value;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -279,23 +281,44 @@ public class ScriptObject implements Cloneable {
     }
 
     public static class Builder {
-        private final ScriptObject object;
+        private final ScriptObject obj;
 
-        public Builder() {
-            object = new ScriptObject();
+        private Builder() {
+            this.obj = new ScriptObject();
         }
 
-        public Builder(@Nullable ScriptObject __proto__) {
-            object = new ScriptObject(__proto__);
+        private Builder(@NotNull ScriptObject obj) {
+            this.obj = new ScriptObject(obj);
         }
 
-        public Builder withMember(@NotNull String name, @NotNull Reference reference) {
-            object.declareMember(name, reference);
+        /**
+         * Create a context builder. The parent of this context will be GLOBAL_OBJECT
+         *
+         * @return Builder
+         * @see InternalObjectManager#GLOBAL_OBJECT
+         */
+        @Contract(" -> new")
+        public static @NotNull ScriptObject.Builder create() {
+            return new ScriptObject.Builder();
+        }
+
+        /**
+         * Create a context builder. The parent of this context will be provided parent context
+         *
+         * @return Builder
+         */
+        @Contract("_ -> new")
+        public static @NotNull ScriptObject.Builder create(@NotNull Context parent) {
+            return new ScriptObject.Builder(parent);
+        }
+
+        public @NotNull ScriptObject.Builder with(@NotNull String name, @NotNull Value value) {
+            obj.declareMember(name, value);
             return this;
         }
 
         public @NotNull ScriptObject build() {
-            return object;
+            return obj;
         }
     }
 }
