@@ -9,14 +9,10 @@ import cn.encmys.ykdz.forest.hyphascript.utils.ReflectionUtils;
 import cn.encmys.ykdz.forest.hyphascript.value.Reference;
 import cn.encmys.ykdz.forest.hyphascript.value.Value;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.Map;
 
 public class InternalObject {
     public InternalObject() {

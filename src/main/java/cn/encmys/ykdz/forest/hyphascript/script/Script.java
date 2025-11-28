@@ -17,7 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Represents a script that can be parsed into an abstract syntax tree (AST)
+ * Represents a text that can be parsed into an abstract syntax tree (AST)
  * and evaluated within a given context. Maintains state to avoid redundant
  * parsing and evaluation operations.
  */
@@ -70,7 +70,6 @@ public class Script {
         } catch (LexerException e) {
             handleLexerError(e, startTime);
         } catch (ParserException e) {
-            e.printStackTrace();
             handleParserError(e, startTime);
         }
 

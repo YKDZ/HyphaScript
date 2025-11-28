@@ -62,15 +62,11 @@ public class JavaFunction extends ScriptObject implements Function {
 
     @Override
     public ScriptObject clone() {
-        try {
-            JavaFunction cloned = (JavaFunction) super.clone();
+        JavaFunction cloned = (JavaFunction) super.clone();
 
-            cloned.name = this.name;
-            cloned.body = this.body;
+        cloned.name = this.name;
+        cloned.body = this.body;
 
-            return cloned;
-        } catch (CloneNotSupportedException e) {
-            throw new AssertionError(e);
-        }
+        return cloned;
     }
 }

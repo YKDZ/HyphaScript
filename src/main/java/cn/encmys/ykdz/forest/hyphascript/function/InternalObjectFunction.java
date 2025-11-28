@@ -137,21 +137,17 @@ public class InternalObjectFunction extends ScriptObject implements Function {
 
     @Override
     public ScriptObject clone() {
-        try {
-            InternalObjectFunction cloned = (InternalObjectFunction) super.clone();
+        InternalObjectFunction cloned = (InternalObjectFunction) super.clone();
 
-            cloned.name = this.name;
-            cloned.parameters = new LinkedHashMap<>(this.parameters);
-            cloned.uncertainParameter = this.uncertainParameter;
+        cloned.name = this.name;
+        cloned.parameters = new LinkedHashMap<>(this.parameters);
+        cloned.uncertainParameter = this.uncertainParameter;
 
-            cloned.body = this.body;
+        cloned.body = this.body;
 
-            cloned.manualTarget = this.manualTarget != null ? this.manualTarget : null;
+        cloned.manualTarget = this.manualTarget != null ? this.manualTarget : null;
 
-            return cloned;
-        } catch (CloneNotSupportedException e) {
-            throw new AssertionError(e);
-        }
+        return cloned;
     }
 
     @Override

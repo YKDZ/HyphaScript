@@ -243,7 +243,7 @@ public class ScriptObject implements Cloneable {
     }
 
     @Override
-    protected ScriptObject clone() throws CloneNotSupportedException {
+    protected ScriptObject clone() {
         ScriptObject cloned = new ScriptObject(this.__proto__.getAsScriptObject());
         cloned.members.putAll(this.members);
         cloned.exportedMembers.putAll(this.exportedMembers);
