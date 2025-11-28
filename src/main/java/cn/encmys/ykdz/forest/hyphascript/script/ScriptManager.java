@@ -5,22 +5,21 @@ import cn.encmys.ykdz.forest.hyphascript.oop.internal.InternalObjectManager;
 import cn.encmys.ykdz.forest.hyphascript.utils.FileUtils;
 import cn.encmys.ykdz.forest.hyphascript.value.Value;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Stream;
 
 public class ScriptManager {
     private final static @NotNull Map<String, Script> scripts = new HashMap<>();
     private static final @NotNull Map<@NotNull String, @NotNull List<String>> memberGlobalScriptImported = new HashMap<>();
+    private static final @NotNull Map<String, String> scriptOwners = new HashMap<>();
 
     private ScriptManager() {
     }
@@ -34,12 +33,13 @@ public class ScriptManager {
      * @see InternalObjectManager#GLOBAL_OBJECT
      */
     @NotNull
-    public static Script createScript(@NotNull String namespace, @NotNull String scriptStr, @NotNull Context context) {
+    public static Script createScript(@NotNull String namespace, @NotNull String scriptStr, @NotNull Context context,
+                                      @NotNull String owner) {
         if (scripts.containsKey(namespace))
             throw new IllegalArgumentException("Script with namespace " + namespace + " already exists");
         Script script = new Script(scriptStr);
         script.evaluate(context);
-        scripts.put(namespace, script);
+        registerScript(namespace, script, owner);
         return script;
     }
 
@@ -48,59 +48,57 @@ public class ScriptManager {
         return scripts.get(namespace);
     }
 
-    public static void putScript(@NotNull String namespace, @NotNull Script script) {
-        scripts.put(namespace, script);
-    }
-
     public static boolean hasScript(@NotNull String namespace) {
         return scripts.containsKey(namespace);
     }
 
-    public static void removeScript(@NotNull String namespace) {
-        scripts.remove(namespace);
-    }
-
-    public static void loadAllFrom(@NotNull Path folder) throws IOException {
-        if (!Files.exists(folder) || !Files.isDirectory(folder)) {
-            if (!folder.toFile().mkdirs()) {
-                throw new RuntimeException("Error when creating scripts folder.");
+    public static void loadAllFromFiles(@NotNull String owner, @NotNull List<File> files) {
+        files.forEach(file -> {
+            try {
+                loadScript(file, true, owner);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
             }
-        }
-
-        try (Stream<Path> paths = Files.walk(folder)) {
-            paths.filter(path -> Files.isRegularFile(path) && path.toString().toLowerCase().endsWith(".hps"))
-                    .forEach(path -> {
-                        try {
-                            loadScript(path, path.startsWith(folder + "/.global"));
-                        } catch (IOException e) {
-                            throw new RuntimeException(e);
-                        }
-                    });
-        }
+        });
     }
 
-    public static void loadScript(@NotNull Path scriptFile, boolean isGlobal) throws IOException {
-        loadScript(scriptFile.toFile(), isGlobal);
+    public static void unloadAllByOwner(@NotNull String owner) {
+        List<String> toRemove = new ArrayList<>();
+        scriptOwners.forEach((ns, o) -> {
+            if (o.equals(owner)) {
+                toRemove.add(ns);
+            }
+        });
+        toRemove.forEach(ns -> unloadScript(ns, owner));
     }
 
-    public static void loadScript(@NotNull File scriptFile, boolean isGlobal) throws IOException {
+    public static @NotNull String loadScript(@NotNull File scriptFile, boolean isGlobal, @NotNull String owner)
+            throws IOException {
         final String content = FileUtils.readFile(scriptFile);
 
         final Context configContext = new Context();
-        if (!checkIfValid(extractConfigAndImportsFromScript(content), configContext)) return;
+        if (!checkIfValid(extractConfigAndImportsFromScript(content), configContext))
+            throw new RuntimeException("Invalid script.hps Config");
 
         // 检查 namespace
         final String id = configContext.findMemberWithPathSafely("Config.namespace", String.class).orElse("");
         final String namespace = !id.isEmpty() ? id : scriptFile.getName().replaceFirst("\\.[^.]+$", "");
 
+        if (scripts.containsKey(namespace)) {
+            String currentOwner = scriptOwners.get(namespace);
+            throw new RuntimeException("Namespace " + namespace + " is already occupied by "
+                    + (currentOwner == null ? "unknown" : currentOwner));
+        }
+
         // 已满足所有条件
         final Script registeredScript = new Script(content);
         final EvaluateResult result = registeredScript.evaluate(new Context(null));
         if (result.type() != EvaluateResult.Type.SUCCESS) {
-            throw new RuntimeException("Error when evaluate pack: " + scriptFile.getAbsolutePath() + ". Import will not continue. " + result);
+            throw new RuntimeException("Error when evaluate pack: " + scriptFile.getAbsolutePath()
+                    + ". Import will not continue. " + result);
         }
         // 注册到脚本管理器
-        ScriptManager.putScript(namespace, registeredScript);
+        registerScript(namespace, registeredScript, owner);
 
         // 检查是否是全局脚本（覆盖 .global 路径的设置）
         final Value isGlobalValue = configContext.findMemberWithPathSafely("Config.isGlobal").orElse(new Value(null));
@@ -116,33 +114,47 @@ public class ScriptManager {
             memberGlobalScriptImported.putIfAbsent(namespace, new ArrayList<>());
 
             // 检查是否解包导入
-            final Value isUnpackImportValue = configContext.findMemberWithPathSafely("Config.isUnpack").orElse(new Value(null));
-            final boolean isUnpackImport = isUnpackImportValue.isType(Value.Type.BOOLEAN) && isUnpackImportValue.getAsBoolean();
+            final Value isUnpackImportValue = configContext.findMemberWithPathSafely("Config.isUnpack")
+                    .orElse(new Value(null));
+            final boolean isUnpackImport = isUnpackImportValue.isType(Value.Type.BOOLEAN)
+                    && isUnpackImportValue.getAsBoolean();
 
             if (isUnpackImport) {
                 registeredScript.getContext().getExportedMembers().forEach((name, reference) -> {
-                    if (name.equals("Config")) return;
+                    if (name.equals("Config"))
+                        return;
                     memberGlobalScriptImported.get(namespace).add(name);
-                    InternalObjectManager.GLOBAL_OBJECT.declareMember(name, reference.getReferredValue());
+                    InternalObjectManager.GLOBAL_OBJECT.findLocalMemberOrCreateOne(name)
+                            .setReferredValue(reference.getReferredValue(), false);
                 });
             } else {
                 memberGlobalScriptImported.get(namespace).add(namespace);
-                InternalObjectManager.GLOBAL_OBJECT.declareMember(namespace, new Value(registeredScript.getContext().getExportedMembers()));
+                InternalObjectManager.GLOBAL_OBJECT.findLocalMemberOrCreateOne(namespace)
+                        .setReferredValue(new Value(registeredScript.getContext().getExportedMembers()), false);
             }
         }
+
+        return namespace;
     }
 
-    public static void unloadAllScripts() {
-        List<String> namespaces = new ArrayList<>(scripts.keySet());
-        namespaces.forEach(ScriptManager::unloadScript);
-    }
+    public static void unloadScript(@NotNull String namespace, @Nullable String owner) {
+        String actualOwner = scriptOwners.get(namespace);
+        if (owner != null && actualOwner != null && !actualOwner.equals(owner)) {
+            return;
+        }
 
-    public static void unloadScript(@NotNull String namespace) {
+        scriptOwners.remove(namespace);
         final List<String> members = memberGlobalScriptImported.get(namespace);
-        if (members == null) return;
-        members.forEach(InternalObjectManager.OBJECT_PROTOTYPE::deleteMember);
-        ScriptManager.removeScript(namespace);
-        memberGlobalScriptImported.remove(namespace);
+        if (members != null) {
+            members.forEach(InternalObjectManager.GLOBAL_OBJECT::deleteMember);
+            memberGlobalScriptImported.remove(namespace);
+        }
+        scripts.remove(namespace);
+    }
+
+    private static void registerScript(String namespace, Script script, String owner) {
+        scripts.put(namespace, script);
+        scriptOwners.put(namespace, owner);
     }
 
     private static boolean checkIfValid(@NotNull String config, @NotNull Context context) {
