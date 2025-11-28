@@ -30,8 +30,8 @@ public class InternalObjectFunction extends ScriptObject implements Function {
 
     public InternalObjectFunction(@NotNull String name, @NotNull LinkedHashMap<String, ASTNode> parameters, @NotNull String uncertainParameter, @NotNull MethodHandle body) {
         super(InternalObjectManager.FUNCTION_PROTOTYPE);
-        super.declareMember("prototype", new Reference(new Value(new ScriptObject.Builder()
-                .withMember("constructor", new Reference(new Value(this)))
+        super.declareMember("prototype", new Reference(new Value(ScriptObject.Builder.create()
+                .with("constructor", new Value(this))
                 .build())));
         this.name = name;
         this.parameters = parameters;

@@ -99,7 +99,7 @@ public class FunctionCall extends ASTNode {
             }
 
             default ->
-                    throw new EvaluateException(this, functionName + " is not a function or java method but " + functionValue.getType());
+                    throw new EvaluateException(this, "\"" + functionName + "\"" + " is not a function or java method but " + functionValue.getType());
         };
     }
 

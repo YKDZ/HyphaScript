@@ -27,8 +27,6 @@ public class InternalObjectManager {
     public static final @NotNull ScriptObject NUMBER;
     public static final @NotNull ScriptObject NUMBER_PROTOTYPE;
     public static final @NotNull ScriptObject FUTURE;
-    public static final @NotNull ScriptObject RANDOM;
-    public static final @NotNull ScriptObject MATH;
 
     private static final @NotNull Map<@NotNull String, @NotNull ScriptObject> objects = new HashMap<>();
 
@@ -46,8 +44,14 @@ public class InternalObjectManager {
         NUMBER_PROTOTYPE = getPrototype(NUMBER);
 
         FUTURE = register("Future", new FutureObject());
-        RANDOM = register("Random", new RandomObject());
-        MATH = register("Math", new MathObject());
+
+        registerWithPrototype("Random", new RandomObject());
+        registerWithPrototype("Command", new CommandObject());
+        registerWithPrototype("Player", new PlayerObject());
+        registerWithPrototype("Console", new ConsoleObject());
+        registerWithPrototype("Server", new ServerObject());
+        registerWithPrototype("Math", new MathObject());
+        registerWithPrototype("PlaceholderAPI", new PlaceholderAPIObject());
 
         objects.forEach((key, value) -> GLOBAL_OBJECT.declareMember(
                 key, new Reference(new Value(value), true)
