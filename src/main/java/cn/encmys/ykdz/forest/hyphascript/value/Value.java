@@ -5,6 +5,7 @@ import cn.encmys.ykdz.forest.hyphascript.function.Function;
 import cn.encmys.ykdz.forest.hyphascript.oop.ScriptObject;
 import cn.encmys.ykdz.forest.hyphascript.utils.StringUtils;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -224,9 +225,10 @@ public class Value {
         if (type == Type.ADVENTURE_COMPONENT)
             return (Component) value;
         else if (type == Type.STRING)
-            return MiniMessage.miniMessage().deserialize((String) value);
+            return MiniMessage.miniMessage().deserialize((String) value).decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE);
             // 尽力将所有内容转化为 Component
-        else return Component.text(toReadableString());
+        else
+            return Component.text(toReadableString()).decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE);
     }
 
     public @NotNull Class<?> getClassOfValue() throws ValueException {
