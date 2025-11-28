@@ -19,27 +19,30 @@ public class ArrayAccessParser implements ExpressionParser.Infix {
     public @NotNull ASTNode parse(@NotNull ParseContext ctx, @NotNull ASTNode left) {
         ctx.consume(Token.Type.LEFT_BRACKET);
 
-        // 解析 from、to、step，允许为空
-        ASTNode from = parseSliceComponent(ctx);
-        ASTNode to = parseSliceComponent(ctx);
-        ASTNode step = parseSliceComponent(ctx);
+        ASTNode from = new Literal();
+        ASTNode to = new Literal();
+        ASTNode step = new Literal();
+        boolean isSlice = false;
+
+        if (!ctx.check(Token.Type.COLON) && !ctx.check(Token.Type.RIGHT_BRACKET)) {
+            from = ctx.parseExpression(PrecedenceTable.Precedence.LOWEST);
+        }
+
+        if (ctx.match(Token.Type.COLON)) {
+            isSlice = true;
+            if (!ctx.check(Token.Type.COLON) && !ctx.check(Token.Type.RIGHT_BRACKET)) {
+                to = ctx.parseExpression(PrecedenceTable.Precedence.LOWEST);
+            }
+
+            if (ctx.match(Token.Type.COLON)) {
+                if (!ctx.check(Token.Type.RIGHT_BRACKET)) {
+                    step = ctx.parseExpression(PrecedenceTable.Precedence.LOWEST);
+                }
+            }
+        }
 
         Token rBracket = ctx.consume(Token.Type.RIGHT_BRACKET);
 
-        return new ArrayAccess(left, from, to, step, left.getStartToken(), rBracket);
-    }
-
-    private @NotNull ASTNode parseSliceComponent(@NotNull ParseContext ctx) {
-        if (ctx.match(Token.Type.COLON)) {
-            return new Literal();
-        }
-        if (ctx.check(Token.Type.RIGHT_BRACKET)) {
-            return new Literal();
-        }
-
-        ASTNode expr = ctx.parseExpression(PrecedenceTable.Precedence.LOWEST);
-        ctx.match(Token.Type.COLON);
-
-        return expr;
+        return new ArrayAccess(left, from, to, step, left.getStartToken(), rBracket, isSlice);
     }
 }

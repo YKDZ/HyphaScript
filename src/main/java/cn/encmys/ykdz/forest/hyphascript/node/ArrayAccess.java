@@ -21,13 +21,16 @@ public class ArrayAccess extends ASTNode {
     private final ASTNode to;
     @NotNull
     private final ASTNode step;
+    private final boolean isSlice;
 
-    public ArrayAccess(@NotNull ASTNode target, @NotNull ASTNode from, @NotNull ASTNode to, @NotNull ASTNode step, @NotNull Token startToken, @NotNull Token endToken) {
+    public ArrayAccess(@NotNull ASTNode target, @NotNull ASTNode from, @NotNull ASTNode to, @NotNull ASTNode step,
+            @NotNull Token startToken, @NotNull Token endToken, boolean isSlice) {
         super(startToken, endToken);
         this.target = target;
         this.from = from;
         this.to = to;
         this.step = step;
+        this.isSlice = isSlice;
     }
 
     @Override
@@ -54,11 +57,7 @@ public class ArrayAccess extends ASTNode {
             case ARRAY -> {
                 Reference[] array = targetRef.getReferredValue().getAsArray();
 
-                // 当 step 和 to 均为 VOID 时是索引访问
-                boolean isIndexAccess = stepRef.getReferredValue().isType(Value.Type.VOID)
-                        && toRef.getReferredValue().isType(Value.Type.VOID);
-
-                if (isIndexAccess) {
+                if (!isSlice) {
                     // 处理索引访问（需确保 from 存在）
                     if (fromRef.getReferredValue().isType(Value.Type.VOID)) {
                         throw new EvaluateException(this, "Index cannot be omitted");
@@ -66,7 +65,8 @@ public class ArrayAccess extends ASTNode {
                     try {
                         int index = fromRef.getReferredValue().getAsBigDecimal().intValue();
                         // 处理负数索引
-                        if (index < 0) index += array.length;
+                        if (index < 0)
+                            index += array.length;
                         yield array[index];
                     } catch (Exception e) {
                         throw new EvaluateException(this, "Error during array index access", e);
@@ -91,7 +91,8 @@ public class ArrayAccess extends ASTNode {
                 } else {
                     fromIndex = fromRef.getReferredValue().getAsBigDecimal().intValue();
                     // 处理负数索引
-                    if (fromIndex < 0) fromIndex += array.length;
+                    if (fromIndex < 0)
+                        fromIndex += array.length;
                 }
 
                 // 若为 VOID，根据步长正负设置默认值
@@ -101,20 +102,23 @@ public class ArrayAccess extends ASTNode {
                 } else {
                     toIndex = toRef.getReferredValue().getAsBigDecimal().intValue();
                     // 处理负数索引
-                    if (toIndex < 0) toIndex += array.length;
+                    if (toIndex < 0)
+                        toIndex += array.length;
                 }
 
                 List<Reference> resultList = new ArrayList<>();
                 if (stepNum > 0) {
                     // 正向切片：start <= i < end
                     for (int i = fromIndex; i < toIndex; i += stepNum) {
-                        if (i < 0 || i >= array.length) break;
+                        if (i < 0 || i >= array.length)
+                            break;
                         resultList.add(array[i]);
                     }
                 } else {
                     // 逆向切片：start >= i > end
                     for (int i = fromIndex; i > toIndex; i += stepNum) {
-                        if (i < 0 || i >= array.length) break;
+                        if (i < 0 || i >= array.length)
+                            break;
                         resultList.add(array[i]);
                     }
                 }
@@ -125,22 +129,69 @@ public class ArrayAccess extends ASTNode {
             case STRING -> {
                 String str = targetRef.getReferredValue().getAsString();
 
-                if (stepRef.getReferredValue().isType(Value.Type.VOID)) {
-                    yield new Reference(new Value(str.charAt(fromRef.getReferredValue().getAsBigDecimal().intValue())));
+                if (!isSlice) {
+                    // 处理索引访问（需确保 from 存在）
+                    if (fromRef.getReferredValue().isType(Value.Type.VOID)) {
+                        throw new EvaluateException(this, "Index cannot be omitted");
+                    }
+                    try {
+                        int index = fromRef.getReferredValue().getAsBigDecimal().intValue();
+                        // 处理负数索引
+                        if (index < 0)
+                            index += str.length();
+                        yield new Reference(new Value(String.valueOf(str.charAt(index))));
+                    } catch (Exception e) {
+                        throw new EvaluateException(this, "Error during string index access", e);
+                    }
                 }
 
-                int stepNum = stepRef.getReferredValue().getAsBigDecimal().intValue();
-                int fromIndex = fromRef.getReferredValue().isType(Value.Type.VOID) ? 0 : fromRef.getReferredValue().getAsBigDecimal().intValue();
-                int toIndex = toRef.getReferredValue().isType(Value.Type.VOID) ? str.length() : toRef.getReferredValue().getAsBigDecimal().intValue();
+                // 若为 VOID，默认步长为 1
+                int stepNum;
+                if (stepRef.getReferredValue().isType(Value.Type.VOID)) {
+                    stepNum = 1;
+                } else {
+                    stepNum = stepRef.getReferredValue().getAsBigDecimal().intValue();
+                    if (stepNum == 0) {
+                        throw new EvaluateException(this, "Slice step cannot be zero");
+                    }
+                }
+
+                // 若为 VOID，根据步长正负设置默认值
+                int fromIndex;
+                if (fromRef.getReferredValue().isType(Value.Type.VOID)) {
+                    fromIndex = (stepNum > 0) ? 0 : str.length() - 1;
+                } else {
+                    fromIndex = fromRef.getReferredValue().getAsBigDecimal().intValue();
+                    // 处理负数索引
+                    if (fromIndex < 0)
+                        fromIndex += str.length();
+                }
+
+                // 若为 VOID，根据步长正负设置默认值
+                int toIndex;
+                if (toRef.getReferredValue().isType(Value.Type.VOID)) {
+                    toIndex = (stepNum > 0) ? str.length() : -1;
+                } else {
+                    toIndex = toRef.getReferredValue().getAsBigDecimal().intValue();
+                    // 处理负数索引
+                    if (toIndex < 0)
+                        toIndex += str.length();
+                }
 
                 StringBuilder result = new StringBuilder();
                 if (stepNum > 0) {
-                    for (int i = fromIndex; i < toIndex && i < str.length(); i += stepNum) {
+                    // 正向切片：start <= i < end
+                    for (int i = fromIndex; i < toIndex; i += stepNum) {
+                        if (i < 0 || i >= str.length())
+                            break;
                         result.append(str.charAt(i));
                     }
                 } else {
-                    for (int i = fromIndex; i > toIndex && i >= 0; i += stepNum) {
-                        result.insert(0, str.charAt(i));
+                    // 逆向切片：start >= i > end
+                    for (int i = fromIndex; i > toIndex; i += stepNum) {
+                        if (i < 0 || i >= str.length())
+                            break;
+                        result.append(str.charAt(i));
                     }
                 }
                 yield new Reference(new Value(result.toString()));
@@ -163,20 +214,25 @@ public class ArrayAccess extends ASTNode {
                 yield object.findMember(index);
             }
             default ->
-                    throw new EvaluateException(this, "Array access can only be cast on nested objects, string and array. But given: " + targetRef.getReferredValue().getType());
+                throw new EvaluateException(this,
+                        "Array access can only be cast on nested objects, string and array. But given: "
+                                + targetRef.getReferredValue().getType());
         };
     }
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         ArrayAccess that = (ArrayAccess) o;
-        return Objects.equals(target, that.target) && Objects.equals(from, that.from) && Objects.equals(to, that.to) && Objects.equals(step, that.step);
+        return isSlice == that.isSlice && Objects.equals(target, that.target) && Objects.equals(from, that.from)
+                && Objects.equals(to, that.to) && Objects.equals(step, that.step);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(target, from, to, step);
+        return Objects.hash(target, from, to, step, isSlice);
     }
 }
