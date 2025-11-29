@@ -6,7 +6,7 @@ import cn.encmys.ykdz.forest.hyphascript.node.ImportAllAs;
 import cn.encmys.ykdz.forest.hyphascript.node.ImportJava;
 import cn.encmys.ykdz.forest.hyphascript.node.ImportObjects;
 import cn.encmys.ykdz.forest.hyphascript.parser.ParseContext;
-import cn.encmys.ykdz.forest.hyphascript.token.Token;
+import cn.encmys.ykdz.forest.hyphascript.lexer.token.Token;
 import cn.encmys.ykdz.forest.hyphascript.utils.ReflectionUtils;
 import org.jetbrains.annotations.NotNull;
 

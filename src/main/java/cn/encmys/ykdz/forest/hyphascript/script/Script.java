@@ -8,7 +8,7 @@ import cn.encmys.ykdz.forest.hyphascript.lexer.Lexer;
 import cn.encmys.ykdz.forest.hyphascript.node.ASTNode;
 import cn.encmys.ykdz.forest.hyphascript.parser.LexicalScope;
 import cn.encmys.ykdz.forest.hyphascript.parser.Parser;
-import cn.encmys.ykdz.forest.hyphascript.token.Token;
+import cn.encmys.ykdz.forest.hyphascript.lexer.token.Token;
 import cn.encmys.ykdz.forest.hyphascript.value.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

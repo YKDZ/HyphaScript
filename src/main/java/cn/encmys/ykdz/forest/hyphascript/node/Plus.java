@@ -2,7 +2,7 @@ package cn.encmys.ykdz.forest.hyphascript.node;
 
 import cn.encmys.ykdz.forest.hyphascript.context.Context;
 import cn.encmys.ykdz.forest.hyphascript.exception.EvaluateException;
-import cn.encmys.ykdz.forest.hyphascript.token.Token;
+import cn.encmys.ykdz.forest.hyphascript.lexer.token.Token;
 import cn.encmys.ykdz.forest.hyphascript.value.Reference;
 import cn.encmys.ykdz.forest.hyphascript.value.Value;
 import net.kyori.adventure.text.Component;

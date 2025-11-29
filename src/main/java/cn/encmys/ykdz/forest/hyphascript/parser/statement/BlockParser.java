@@ -3,7 +3,7 @@ package cn.encmys.ykdz.forest.hyphascript.parser.statement;
 import cn.encmys.ykdz.forest.hyphascript.node.ASTNode;
 import cn.encmys.ykdz.forest.hyphascript.node.Block;
 import cn.encmys.ykdz.forest.hyphascript.parser.ParseContext;
-import cn.encmys.ykdz.forest.hyphascript.token.Token;
+import cn.encmys.ykdz.forest.hyphascript.lexer.token.Token;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;

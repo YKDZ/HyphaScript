@@ -52,6 +52,7 @@ public class InternalObjectManager {
         registerWithPrototype("Server", new ServerObject());
         registerWithPrototype("Math", new MathObject());
         registerWithPrototype("PlaceholderAPI", new PlaceholderAPIObject());
+        registerWithPrototype("Date", new DateObject());
 
         objects.forEach((key, value) -> GLOBAL_OBJECT.declareMember(
                 key, new Reference(new Value(value), true)

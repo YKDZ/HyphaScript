@@ -5,7 +5,7 @@ import cn.encmys.ykdz.forest.hyphascript.node.Assignment;
 import cn.encmys.ykdz.forest.hyphascript.parser.ParseContext;
 import cn.encmys.ykdz.forest.hyphascript.parser.PrecedenceTable;
 import cn.encmys.ykdz.forest.hyphascript.parser.expression.ExpressionParser;
-import cn.encmys.ykdz.forest.hyphascript.token.Token;
+import cn.encmys.ykdz.forest.hyphascript.lexer.token.Token;
 import org.jetbrains.annotations.NotNull;
 
 public class AssignmentParser implements ExpressionParser.Infix {

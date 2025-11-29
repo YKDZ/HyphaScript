@@ -1,9 +1,9 @@
 package cn.encmys.ykdz.forest.hyphascript.utils;
 
+import cn.encmys.ykdz.forest.hyphascript.HyphaScript;
 import cn.encmys.ykdz.forest.hyphascript.value.Reference;
 import cn.encmys.ykdz.forest.hyphascript.value.Value;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.invoke.MethodHandle;
@@ -50,7 +50,7 @@ public class StringUtils {
     }
 
     public static @NotNull String toString(@NotNull Component component) {
-        return MiniMessage.miniMessage().serialize(component);
+        return HyphaScript.miniMessage.serialize(component);
     }
 
     public static @NotNull String toString(@NotNull Object obj) {

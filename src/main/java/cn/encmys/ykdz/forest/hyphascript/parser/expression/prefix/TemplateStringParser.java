@@ -6,7 +6,7 @@ import cn.encmys.ykdz.forest.hyphascript.node.TemplateString;
 import cn.encmys.ykdz.forest.hyphascript.parser.ParseContext;
 import cn.encmys.ykdz.forest.hyphascript.parser.PrecedenceTable;
 import cn.encmys.ykdz.forest.hyphascript.parser.expression.ExpressionParser;
-import cn.encmys.ykdz.forest.hyphascript.token.Token;
+import cn.encmys.ykdz.forest.hyphascript.lexer.token.Token;
 import cn.encmys.ykdz.forest.hyphascript.value.Value;
 import org.jetbrains.annotations.NotNull;
 

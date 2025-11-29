@@ -35,13 +35,23 @@ public class ScriptObject implements Cloneable {
         declareMember(name, new Reference(initValue));
     }
 
+    /**
+     * 声明指定引用到上下文的本地成员表 <br/>
+     * 若有重名，原先值将会被静默覆盖而丢失
+     *
+     * @param name      引用的变量名
+     * @param reference 引用
+     */
     public void declareMember(@NotNull String name, @NotNull Reference reference) {
-        if (hasLocalMember(name)) {
-            throw new ScriptObjectException(this, "Member \"" + name + "\" already exists");
-        }
         members.put(name, reference);
     }
 
+    /**
+     * 递归向上覆盖作用域链中第一个给定名称的引用
+     *
+     * @param name      被覆盖的目标变量的名称
+     * @param reference 新的引用值
+     */
     public void putMember(@NotNull String name, @NotNull Reference reference) {
         if (hasLocalMember(name)) {
             members.put(name, reference);
@@ -60,10 +70,6 @@ public class ScriptObject implements Cloneable {
 
     public void deleteMember(@NotNull String name) {
         members.remove(name);
-    }
-
-    public void forceSetLocalMember(@NotNull String name, @NotNull Reference reference) {
-        members.put(name, reference);
     }
 
     public @NotNull Reference findMember(@NotNull String name) {
@@ -120,7 +126,8 @@ public class ScriptObject implements Cloneable {
     }
 
     public boolean hasMember(@NotNull String name) {
-        return hasLocalMember(name) || (!getProto().isType(Value.Type.NULL) && getProto().getAsScriptObject().hasMember(name));
+        return hasLocalMember(name)
+                || (!getProto().isType(Value.Type.NULL) && getProto().getAsScriptObject().hasMember(name));
     }
 
     public void putAllExportedMembers(@NotNull Map<String, Reference> exportedMembers) {
@@ -134,13 +141,16 @@ public class ScriptObject implements Cloneable {
     public void setExported(@NotNull String name, @NotNull String as) {
         if (!this.hasMember(name))
             throw new ScriptObjectException(this, "Exported member \"" + name + "\" does not exist");
-        if (this.exportedMembers.containsKey(as)) return;
+        if (this.exportedMembers.containsKey(as))
+            return;
         exportedMembers.put(as, findMember(name));
     }
 
     public void setUnExported(@NotNull String name) {
-        if (!this.hasMember(name)) throw new ScriptObjectException(this, "Exported member does not exist");
-        if (!this.exportedMembers.containsKey(name)) return;
+        if (!this.hasMember(name))
+            throw new ScriptObjectException(this, "Exported member does not exist");
+        if (!this.exportedMembers.containsKey(name))
+            return;
         exportedMembers.remove(name);
     }
 
@@ -256,21 +266,20 @@ public class ScriptObject implements Cloneable {
         temp.putAll(members);
         return temp.entrySet().stream()
                 .map(e -> {
-                    // 可能导致循环引用
-                    if (e.getKey().startsWith("__")) return null;
                     try {
-                        return (exportedMembers.containsKey(e.getKey()) ? "*" : "") + e.getKey() + ": " + e.getValue().getReferredValue().toReadableString();
+                        return (exportedMembers.containsKey(e.getKey()) ? "*" : "") + e.getKey() + ": "
+                                + e.getValue().getReferredValue().toReadableString();
                     } catch (Exception ex) {
                         return e.getKey() + ": [Error]";
                     }
                 })
-                .filter(Objects::nonNull)
                 .collect(Collectors.joining(", ", "{", "}"));
     }
 
     @Override
     public boolean equals(Object o) {
-        if (o == null || getClass() != o.getClass()) return false;
+        if (o == null || getClass() != o.getClass())
+            return false;
         ScriptObject object = (ScriptObject) o;
         return Objects.equals(members, object.members) && Objects.equals(__proto__, object.__proto__);
     }
@@ -303,7 +312,8 @@ public class ScriptObject implements Cloneable {
         }
 
         /**
-         * Create a context builder. The parent of this context will be provided parent context
+         * Create a context builder. The parent of this context will be provided parent
+         * context
          *
          * @return Builder
          */

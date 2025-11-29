@@ -2,7 +2,7 @@ package cn.encmys.ykdz.forest.hyphascript.parser;
 
 import cn.encmys.ykdz.forest.hyphascript.exception.ParserException;
 import cn.encmys.ykdz.forest.hyphascript.node.ASTNode;
-import cn.encmys.ykdz.forest.hyphascript.token.Token;
+import cn.encmys.ykdz.forest.hyphascript.lexer.token.Token;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 

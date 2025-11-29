@@ -1,4 +1,4 @@
-package cn.encmys.ykdz.forest.hyphascript.token;
+package cn.encmys.ykdz.forest.hyphascript.lexer.token;
 
 import org.jetbrains.annotations.NotNull;
 

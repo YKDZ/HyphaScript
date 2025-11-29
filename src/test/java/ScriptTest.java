@@ -222,11 +222,6 @@ public class ScriptTest {
                 a %= 2
                 a
                 """).getAsBigDecimal().intValue());
-        assertEquals(1d, evaluate("""
-                let a = 5
-                a %= 2
-                a
-                """).getAsBigDecimal().intValue());
         assertEquals(5d, evaluate("""
                 let a = 4
                 a := 5

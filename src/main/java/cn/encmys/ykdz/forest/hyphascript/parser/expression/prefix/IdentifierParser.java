@@ -4,7 +4,7 @@ import cn.encmys.ykdz.forest.hyphascript.node.ASTNode;
 import cn.encmys.ykdz.forest.hyphascript.node.Identifier;
 import cn.encmys.ykdz.forest.hyphascript.parser.ParseContext;
 import cn.encmys.ykdz.forest.hyphascript.parser.expression.ExpressionParser;
-import cn.encmys.ykdz.forest.hyphascript.token.Token;
+import cn.encmys.ykdz.forest.hyphascript.lexer.token.Token;
 import org.jetbrains.annotations.NotNull;
 
 public class IdentifierParser implements ExpressionParser.Prefix {

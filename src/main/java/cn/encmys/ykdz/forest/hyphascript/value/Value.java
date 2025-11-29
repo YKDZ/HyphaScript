@@ -1,12 +1,12 @@
 package cn.encmys.ykdz.forest.hyphascript.value;
 
+import cn.encmys.ykdz.forest.hyphascript.HyphaScript;
 import cn.encmys.ykdz.forest.hyphascript.exception.ValueException;
 import cn.encmys.ykdz.forest.hyphascript.function.Function;
 import cn.encmys.ykdz.forest.hyphascript.oop.ScriptObject;
 import cn.encmys.ykdz.forest.hyphascript.utils.StringUtils;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextDecoration;
-import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -213,9 +213,9 @@ public class Value {
     }
 
     /**
+     * 对于 {@link Type#VOID} 和 {@link Type#NULL} 类型的值，返回 {@link Component#empty()}；<br />
      * 对于 {@link Type#ADVENTURE_COMPONENT} 类型的值，直接返回；<br />
      * 对于 {@link Type#STRING} 类型的值，将其视为 MiniMessage 并反序列化为组件再返回；<br />
-     * 对于 {@link Type#VOID} 和 {@link Type#VOID} 类型的值，返回 {@link Component#empty()}；<br />
      * 对于其他类型的值，视为纯文本，先用 {@link Value#toReadableString()} 转换为可读文本再用 {@link Component#text()} 包装为组件后返回；<br />
      *
      */
@@ -225,7 +225,7 @@ public class Value {
         if (type == Type.ADVENTURE_COMPONENT)
             return (Component) value;
         else if (type == Type.STRING)
-            return MiniMessage.miniMessage().deserialize((String) value).decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE);
+            return HyphaScript.miniMessage.deserialize((String) value).decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE);
             // 尽力将所有内容转化为 Component
         else
             return Component.text(toReadableString()).decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE);

@@ -4,7 +4,7 @@ import cn.encmys.ykdz.forest.hyphascript.context.Context;
 import cn.encmys.ykdz.forest.hyphascript.exception.EvaluateException;
 import cn.encmys.ykdz.forest.hyphascript.oop.ScriptObject;
 import cn.encmys.ykdz.forest.hyphascript.oop.internal.InternalObjectManager;
-import cn.encmys.ykdz.forest.hyphascript.token.Token;
+import cn.encmys.ykdz.forest.hyphascript.lexer.token.Token;
 import cn.encmys.ykdz.forest.hyphascript.value.Reference;
 import cn.encmys.ykdz.forest.hyphascript.value.Value;
 import org.jetbrains.annotations.NotNull;
@@ -55,7 +55,7 @@ public class ClassDeclaration extends ASTNode {
 
         // Class == Class.prototype.constructor
         ScriptObject classObj = classPrototype.findMember("constructor").getReferredValue().getAsScriptObject();
-        classObj.forceSetLocalMember("prototype", new Reference(new Value(classPrototype)));
+        classObj.declareMember("prototype", new Reference(new Value(classPrototype)));
 
         // Class.staticMethod = () => console.log("static");
         staticMembers.forEach((key, value) -> {

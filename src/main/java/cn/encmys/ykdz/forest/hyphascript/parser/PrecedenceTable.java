@@ -1,6 +1,6 @@
 package cn.encmys.ykdz.forest.hyphascript.parser;
 
-import cn.encmys.ykdz.forest.hyphascript.token.Token;
+import cn.encmys.ykdz.forest.hyphascript.lexer.token.Token;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.EnumMap;

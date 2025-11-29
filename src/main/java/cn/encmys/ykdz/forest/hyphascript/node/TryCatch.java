@@ -4,7 +4,7 @@ import cn.encmys.ykdz.forest.hyphascript.context.Context;
 import cn.encmys.ykdz.forest.hyphascript.exception.BreakNotificationException;
 import cn.encmys.ykdz.forest.hyphascript.exception.ContinueNotificationException;
 import cn.encmys.ykdz.forest.hyphascript.exception.ReturnNotificationException;
-import cn.encmys.ykdz.forest.hyphascript.token.Token;
+import cn.encmys.ykdz.forest.hyphascript.lexer.token.Token;
 import cn.encmys.ykdz.forest.hyphascript.value.Reference;
 import cn.encmys.ykdz.forest.hyphascript.value.Value;
 import org.jetbrains.annotations.NotNull;

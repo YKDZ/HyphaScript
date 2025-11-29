@@ -48,7 +48,7 @@ public class FutureObject extends InternalObject {
         }
         future = future.thenApplyAsync((result) ->
                 func.call(new Value(wrapper), List.of(result.getReferredValue()), ctx));
-        wrapper.forceSetLocalMember("future", new Reference(new Value(future)));
+        wrapper.declareMember("future", new Reference(new Value(future)));
         return wrapper;
     }
 
@@ -61,7 +61,7 @@ public class FutureObject extends InternalObject {
         CompletableFuture<Reference> future = (CompletableFuture<Reference>) wrapper.findMember("future").getReferredValue().getValue();
         if (future == null) return InternalObjectManager.FUTURE.newInstance();
         future = future.whenCompleteAsync((result, throwable) -> func.call(new Value(wrapper), List.of(result.getReferredValue(), new Value(throwable)), ctx));
-        wrapper.forceSetLocalMember("future", new Reference(new Value(future)));
+        wrapper.declareMember("future", new Reference(new Value(future)));
         return wrapper;
     }
 

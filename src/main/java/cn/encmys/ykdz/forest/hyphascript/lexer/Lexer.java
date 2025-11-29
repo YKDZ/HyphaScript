@@ -1,7 +1,7 @@
 package cn.encmys.ykdz.forest.hyphascript.lexer;
 
 import cn.encmys.ykdz.forest.hyphascript.exception.LexerException;
-import cn.encmys.ykdz.forest.hyphascript.token.Token;
+import cn.encmys.ykdz.forest.hyphascript.lexer.token.Token;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
