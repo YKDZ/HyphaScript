@@ -10,12 +10,19 @@ import cn.encmys.ykdz.forest.hyphascript.oop.internal.InternalObject;
 import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 
-@ObjectName("Component")
-public class ComponentObject extends InternalObject {
+@ObjectName("MiniMessage")
+public class MiniMessageObject extends InternalObject {
     @Static
-    @Function("mini")
+    @Function("deser")
     @FunctionParas("str")
-    public static Component mini(@NotNull Context ctx) {
+    public static Component deser(@NotNull Context ctx) {
         return HyphaScript.miniMessage.deserialize(ctx.findMember("str").getReferredValue().getAsString());
+    }
+
+    @Static
+    @Function("ser")
+    @FunctionParas("component")
+    public static String ser(@NotNull Context ctx) {
+        return HyphaScript.miniMessage.serialize(ctx.findMember("component").getReferredValue().getAsAdventureComponent());
     }
 }

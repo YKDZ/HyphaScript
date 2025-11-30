@@ -190,7 +190,7 @@ public class ScriptTest {
                 }
                 sum`Hello ${-2} ${8 ** 2} ${3 - 1}`
                 """).getAsBigDecimal().intValue());
-        assertInstanceOf(Component.class, evaluate("Component.mini`<red>Test`").getValue());
+        assertInstanceOf(Component.class, evaluate("MiniMessage.deser`<red>Test`").getValue());
     }
 
     @Test
