@@ -25,7 +25,7 @@ public class TemplateStringParser implements ExpressionParser.Prefix {
                 Token token = ctx.previous();
                 parts.add(new Literal(new Value(token.value()), token));
             } else {
-                parts.add(ctx.parseExpression(PrecedenceTable.Precedence.LOWEST));
+                parts.add(ctx.parseExpression(PrecedenceTable.Precedence.LOWEST, Token.Type.BACKTICK));
             }
         }
 

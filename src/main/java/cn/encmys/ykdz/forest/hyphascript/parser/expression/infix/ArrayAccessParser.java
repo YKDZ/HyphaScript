@@ -1,12 +1,12 @@
 package cn.encmys.ykdz.forest.hyphascript.parser.expression.infix;
 
+import cn.encmys.ykdz.forest.hyphascript.lexer.token.Token;
 import cn.encmys.ykdz.forest.hyphascript.node.ASTNode;
 import cn.encmys.ykdz.forest.hyphascript.node.ArrayAccess;
 import cn.encmys.ykdz.forest.hyphascript.node.Literal;
 import cn.encmys.ykdz.forest.hyphascript.parser.ParseContext;
 import cn.encmys.ykdz.forest.hyphascript.parser.PrecedenceTable;
 import cn.encmys.ykdz.forest.hyphascript.parser.expression.ExpressionParser;
-import cn.encmys.ykdz.forest.hyphascript.lexer.token.Token;
 import org.jetbrains.annotations.NotNull;
 
 public class ArrayAccessParser implements ExpressionParser.Infix {
@@ -19,9 +19,9 @@ public class ArrayAccessParser implements ExpressionParser.Infix {
     public @NotNull ASTNode parse(@NotNull ParseContext ctx, @NotNull ASTNode left) {
         ctx.consume(Token.Type.LEFT_BRACKET);
 
-        ASTNode from = new Literal();
-        ASTNode to = new Literal();
-        ASTNode step = new Literal();
+        ASTNode from = new Literal(false);
+        ASTNode to = new Literal(false);
+        ASTNode step = new Literal(false);
         boolean isSlice = false;
 
         if (!ctx.check(Token.Type.COLON) && !ctx.check(Token.Type.RIGHT_BRACKET)) {

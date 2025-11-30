@@ -24,7 +24,8 @@ public class Parser {
     }
 
     public @NotNull List<ASTNode> parse() {
-        if (ctx.getTokens().isEmpty()) return Collections.emptyList();
+        if (ctx.getTokens().isEmpty())
+            return Collections.emptyList();
 
         List<ASTNode> statements = new ArrayList<>();
         while (!ctx.check(Token.Type.EOF)) {
@@ -55,18 +56,31 @@ public class Parser {
     public @NotNull ASTNode parseExpression(@NotNull PrecedenceTable.Precedence precedence) {
         Token startToken = ctx.current();
         ExpressionParser.Prefix prefix = prefixParsers.get(startToken.type());
-        if (prefix == null) throw new ParserException("Unexpected token: " + startToken, startToken);
+        if (prefix == null)
+            throw new ParserException("Unexpected token: " + startToken, startToken);
 
         ASTNode left = prefix.parse(ctx);
 
         while (precedence.lessThan(nextPrecedence())) {
             Token.Type nextType = ctx.current().type();
+            if (ctx.isIgnoredInfix(nextType))
+                break;
             ExpressionParser.Infix infix = infixParsers.get(nextType);
-            if (infix == null) break;
+            if (infix == null)
+                break;
             left = infix.parse(ctx, left);
         }
 
         return left;
+    }
+
+    public @NotNull ASTNode parseExpression(@NotNull PrecedenceTable.Precedence precedence, Token.Type excludeInfix) {
+        ctx.addIgnoredInfix(excludeInfix);
+        try {
+            return parseExpression(precedence);
+        } finally {
+            ctx.removeIgnoredInfix(excludeInfix);
+        }
     }
 
     public @NotNull ASTNode parseBlock(@NotNull ParseContext ctx) {
@@ -116,6 +130,7 @@ public class Parser {
         registerPrefix(Token.Type.LEFT_BRACKET, new ArrayParser());
         registerPrefix(Token.Type.LEFT_PAREN, new GroupedExpressionOrArrowFunctionParser());
 
+        registerInfix(Token.Type.BACKTICK, new TaggedTemplateStringParser());
         registerInfix(Token.Type.QUESTION, new ConditionalOperatorParser());
         registerInfix(Token.Type.LEFT_BRACKET, new ArrayAccessParser());
         registerInfix(Token.Type.BIT_OR, new BitwiseOrParser());

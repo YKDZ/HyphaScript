@@ -11,25 +11,33 @@ import java.util.Objects;
 public class Literal extends ASTNode {
     @NotNull
     private final Reference value;
+    private final boolean isString;
 
-    public Literal() {
+    public Literal(boolean isString) {
         super(new Token(Token.Type.NULL, "", 0, 0), new Token(Token.Type.NULL, "", 0, 0));
         this.value = new Reference();
+        this.isString = isString;
     }
 
     public Literal(@NotNull Value value) {
         super(new Token(Token.Type.NULL, "", 0, 0), new Token(Token.Type.NULL, "", 0, 0));
         this.value = new Reference(value);
+        this.isString = value.isType(Value.Type.STRING);
     }
 
     public Literal(@NotNull Value value, @NotNull Token token) {
         super(token, token);
         this.value = new Reference(value);
+        this.isString = value.isType(Value.Type.STRING);
     }
 
     @Override
     public @NotNull Reference evaluate(@NotNull Context ctx) {
         return value;
+    }
+
+    public boolean isString() {
+        return isString;
     }
 
     @Override

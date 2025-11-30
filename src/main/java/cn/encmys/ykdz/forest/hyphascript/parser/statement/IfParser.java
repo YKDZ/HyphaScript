@@ -1,11 +1,11 @@
 package cn.encmys.ykdz.forest.hyphascript.parser.statement;
 
+import cn.encmys.ykdz.forest.hyphascript.lexer.token.Token;
 import cn.encmys.ykdz.forest.hyphascript.node.ASTNode;
 import cn.encmys.ykdz.forest.hyphascript.node.Conditional;
 import cn.encmys.ykdz.forest.hyphascript.node.Literal;
 import cn.encmys.ykdz.forest.hyphascript.parser.ParseContext;
 import cn.encmys.ykdz.forest.hyphascript.parser.PrecedenceTable;
-import cn.encmys.ykdz.forest.hyphascript.lexer.token.Token;
 import org.jetbrains.annotations.NotNull;
 
 public class IfParser implements StatementParser {
@@ -29,7 +29,7 @@ public class IfParser implements StatementParser {
     }
 
     private @NotNull ASTNode parseElse(@NotNull ParseContext ctx) {
-        if (!ctx.match(Token.Type.ELSE)) return new Literal();
+        if (!ctx.match(Token.Type.ELSE)) return new Literal(false);
 
         if (ctx.match(Token.Type.ELSE_IF)) {
             return parse(ctx);

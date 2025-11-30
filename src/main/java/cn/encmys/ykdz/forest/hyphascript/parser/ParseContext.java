@@ -11,15 +11,27 @@ import java.util.Collections;
 import java.util.List;
 
 public class ParseContext {
-    private final @NotNull
-    @Unmodifiable List<Token> tokens;
+    private final @NotNull @Unmodifiable List<Token> tokens;
     private final @NotNull Parser parser;
     private @NotNull LexicalScope lexicalScope = LexicalScope.create();
     private int currentIndex = 0;
+    private final @NotNull java.util.Set<Token.Type> ignoredInfixes = new java.util.HashSet<>();
 
     public ParseContext(@NotNull Parser parser, @NotNull List<Token> tokens) {
         this.parser = parser;
         this.tokens = Collections.unmodifiableList(tokens);
+    }
+
+    public void addIgnoredInfix(Token.Type type) {
+        ignoredInfixes.add(type);
+    }
+
+    public void removeIgnoredInfix(Token.Type type) {
+        ignoredInfixes.remove(type);
+    }
+
+    public boolean isIgnoredInfix(Token.Type type) {
+        return ignoredInfixes.contains(type);
     }
 
     public @NotNull ASTNode parseStatement() {
@@ -28,6 +40,10 @@ public class ParseContext {
 
     public @NotNull ASTNode parseExpression(@NotNull PrecedenceTable.Precedence precedence) {
         return parser.parseExpression(precedence);
+    }
+
+    public @NotNull ASTNode parseExpression(@NotNull PrecedenceTable.Precedence precedence, Token.Type excludeInfix) {
+        return parser.parseExpression(precedence, excludeInfix);
     }
 
     public @NotNull ASTNode parseBlock() {
@@ -53,12 +69,14 @@ public class ParseContext {
     }
 
     public boolean check(@NotNull Token.Type... types) {
-        if (currentIndex > tokens.size() - 1) return false;
+        if (currentIndex > tokens.size() - 1)
+            return false;
         return Arrays.asList(types).contains(tokens.get(currentIndex).type());
     }
 
     public boolean check(@NotNull Token.Type type) {
-        if (currentIndex > tokens.size() - 1) return false;
+        if (currentIndex > tokens.size() - 1)
+            return false;
         return type == tokens.get(currentIndex).type();
     }
 
@@ -71,7 +89,8 @@ public class ParseContext {
         if (match(expects)) {
             return previous();
         }
-        throw new ParserException("Unexpected token, expected " + Arrays.toString(expects) + " but given: " + current() + ".", current());
+        throw new ParserException(
+                "Unexpected token, expected " + Arrays.toString(expects) + " but given: " + current() + ".", current());
     }
 
     public @NotNull Token consume(@NotNull Token.Type expect) {
@@ -91,7 +110,8 @@ public class ParseContext {
         if (previous().line() < current().line()) {
             return;
         }
-        throw new ParserException("Unexpected token, expected FINISH or statement end but given: " + current() + ".", current());
+        throw new ParserException("Unexpected token, expected FINISH or statement end but given: " + current() + ".",
+                current());
     }
 
     public @NotNull Token current() {

@@ -184,6 +184,13 @@ public class ScriptTest {
                 const world = "World"
                 `Hello ${world} ${3 - 1}`
                 """).getAsString());
+        assertEquals(64d, evaluate("""
+                const sum = (strings, ...values) => {
+                    return values.sum()
+                }
+                sum`Hello ${-2} ${8 ** 2} ${3 - 1}`
+                """).getAsBigDecimal().intValue());
+        assertInstanceOf(Component.class, evaluate("Component.mini`<red>Test`").getValue());
     }
 
     @Test

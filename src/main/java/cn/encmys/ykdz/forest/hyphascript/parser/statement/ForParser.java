@@ -1,11 +1,11 @@
 package cn.encmys.ykdz.forest.hyphascript.parser.statement;
 
+import cn.encmys.ykdz.forest.hyphascript.lexer.token.Token;
 import cn.encmys.ykdz.forest.hyphascript.node.ASTNode;
 import cn.encmys.ykdz.forest.hyphascript.node.ForLoop;
 import cn.encmys.ykdz.forest.hyphascript.node.Literal;
 import cn.encmys.ykdz.forest.hyphascript.parser.ParseContext;
 import cn.encmys.ykdz.forest.hyphascript.parser.PrecedenceTable;
-import cn.encmys.ykdz.forest.hyphascript.lexer.token.Token;
 import org.jetbrains.annotations.NotNull;
 
 public class ForParser implements StatementParser {
@@ -20,20 +20,20 @@ public class ForParser implements StatementParser {
 
         ctx.consume(Token.Type.LEFT_PAREN);
 
-        ASTNode initialization = new Literal();
+        ASTNode initialization = new Literal(false);
         if (!ctx.check(Token.Type.FINISH)) {
             initialization = ctx.parseStatement();
         } else {
             ctx.consume(Token.Type.FINISH);
         }
 
-        ASTNode condition = new Literal();
+        ASTNode condition = new Literal(false);
         if (!ctx.check(Token.Type.FINISH)) {
             condition = ctx.parseExpression(PrecedenceTable.Precedence.LOWEST);
         }
         ctx.consume(Token.Type.FINISH);
 
-        ASTNode afterThought = new Literal();
+        ASTNode afterThought = new Literal(false);
         if (!ctx.check(Token.Type.RIGHT_PAREN)) {
             afterThought = ctx.parseExpression(PrecedenceTable.Precedence.LOWEST);
         }

@@ -14,10 +14,15 @@ public class TemplateString extends ASTNode {
     private final List<ASTNode> parts;
     private final boolean isOptional;
 
-    public TemplateString(@NotNull List<ASTNode> parts, boolean isOptional, @NotNull Token startToken, @NotNull Token endToken) {
+    public TemplateString(@NotNull List<ASTNode> parts, boolean isOptional, @NotNull Token startToken,
+            @NotNull Token endToken) {
         super(startToken, endToken);
         this.parts = parts;
         this.isOptional = isOptional;
+    }
+
+    public @NotNull List<ASTNode> getParts() {
+        return parts;
     }
 
     private static @NotNull Reference buildComponent(@NotNull List<Value> parts, boolean isOptional, boolean overflow) {
@@ -27,7 +32,8 @@ public class TemplateString extends ASTNode {
                 case VOID -> {
                 }
                 case NULL -> {
-                    if (isOptional) return new Reference(new Value(null));
+                    if (isOptional)
+                        return new Reference(new Value(null));
                 }
                 default -> {
                     Component comp = value.getAsAdventureComponent();
@@ -49,7 +55,8 @@ public class TemplateString extends ASTNode {
                 case VOID -> {
                 }
                 case NULL -> {
-                    if (isOptional) return new Reference(new Value(null));
+                    if (isOptional)
+                        return new Reference(new Value(null));
                 }
                 default -> result.append(value.getAsString());
             }
@@ -65,6 +72,7 @@ public class TemplateString extends ASTNode {
         // 只要包含一个组件，即视为组件模板串
         boolean isComponent = partValues.stream()
                 .anyMatch(value -> value.isType(Value.Type.ADVENTURE_COMPONENT));
-        return isComponent ? buildComponent(partValues, isOptional, ctx.getConfig().componentDecorationOverflow()) : buildString(partValues, isOptional);
+        return isComponent ? buildComponent(partValues, isOptional, ctx.getConfig().componentDecorationOverflow())
+                : buildString(partValues, isOptional);
     }
 }
