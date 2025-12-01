@@ -13,13 +13,14 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.invoke.MethodHandle;
 import java.lang.reflect.Array;
 import java.math.BigDecimal;
+import java.util.Map;
 import java.util.Objects;
 
 public class Value {
     @NotNull
     private final Type type;
     @Nullable
-    private Object value;
+    private final Object value;
 
     /**
      * Construct a value with Type VOID
@@ -39,11 +40,33 @@ public class Value {
      * The type of value will be inferred automatically
      *
      * @param value Value of value
-     * @see #setValue(Object, boolean)
      */
     public Value(@Nullable Object value) {
         this.type = calType(value);
-        setValue(this.type, value, false);
+        
+        if (value != null && type == Type.ARRAY && value.getClass().isArray()) {
+            ScriptArray array = new ScriptArray();
+            int len = Array.getLength(value);
+            for (int i = 0; i < len; i++) {
+                Object elem = Array.get(value, i);
+                if (elem instanceof Reference) {
+                    array.put(i, (Reference) elem);
+                } else {
+                    array.put(i, new Reference(new Value(elem)));
+                }
+            }
+            this.value = array;
+        } else if (type == Type.SCRIPT_OBJECT && value instanceof Map) {
+            final ScriptObject scriptObject = new ScriptObject();
+            ((Map<?, ?>) value).forEach((k, v) -> {
+                final String name = String.valueOf(k);
+                final Reference ref = new Reference(new Value(v));
+                scriptObject.declareMember(name, ref);
+            });
+            this.value = scriptObject;
+        } else {
+            this.value = value;
+        }
     }
 
     public Value(@NotNull Type type, @NotNull Object value) {
@@ -68,7 +91,7 @@ public class Value {
             return Type.BOOLEAN;
         } else if (value instanceof Function) {
             return Type.FUNCTION;
-        } else if (value instanceof ScriptObject) {
+        } else if (value instanceof ScriptObject || value instanceof Map) {
             return Type.SCRIPT_OBJECT;
         } else if (value instanceof Class<?>) {
             return Type.JAVA_CLASS;
@@ -84,41 +107,9 @@ public class Value {
     }
 
     public @Nullable Object getValue() throws ValueException {
-        if (type == Type.VOID) throw new ValueException(this, "Impossible to get value of void.");
+        if (type == Type.VOID)
+            throw new ValueException(this, "Impossible to get value of void.");
         return value;
-    }
-
-    public void setValue(@Nullable Object value, boolean typeCheck) {
-        final Type newType = calType(value);
-        setValue(newType, value, typeCheck);
-    }
-
-    private void setValue(@NotNull Type type, @Nullable Object value, boolean typeCheck) {
-        if (typeCheck && this.type != type)
-            throw new ValueException(this, "Type error. New type is " + type + " but old type is " + this.type);
-
-        if (value != null && type == Type.ARRAY && value.getClass().isArray()) {
-            Class<?> componentType = value.getClass().getComponentType();
-
-            if (Reference.class.equals(componentType)) {
-                this.value = value;
-                return;
-            }
-
-            int len = Array.getLength(value);
-            Reference[] refs = new Reference[len];
-            for (int i = 0; i < len; i++) {
-                Object elem = Array.get(value, i);
-                if (elem instanceof Reference) {
-                    refs[i] = (Reference) elem;
-                } else {
-                    refs[i] = new Reference(new Value(elem));
-                }
-            }
-            this.value = refs;
-        } else {
-            this.value = value;
-        }
     }
 
     public @NotNull Type getType() {
@@ -142,16 +133,20 @@ public class Value {
         if (!isType(Type.NUMBER))
             throw new ValueException(this, "Value " + this + " is not a number but: " + type);
         assert value != null;
-        if (value instanceof BigDecimal) return (BigDecimal) value;
+        if (value instanceof BigDecimal)
+            return (BigDecimal) value;
         else {
             return BigDecimal.valueOf(((Number) value).doubleValue());
         }
     }
 
     public @NotNull String getAsString() throws ValueException {
-        if (value instanceof Character) return String.valueOf((char) value);
-        else if (value instanceof String) return (String) value;
-        else return toReadableString();
+        if (value instanceof Character)
+            return String.valueOf((char) value);
+        else if (value instanceof String)
+            return (String) value;
+        else
+            return toReadableString();
     }
 
     public char getAsChar() throws ValueException {
@@ -161,30 +156,31 @@ public class Value {
     }
 
     public boolean getAsBoolean() {
-        if (type == Type.NULL) return false;
+        if (type == Type.NULL)
+            return false;
         assert value != null;
 
         return switch (type) {
             case BOOLEAN -> (boolean) value;
-            case ARRAY -> ((Reference[]) value).length > 0;
+            case ARRAY -> !((ScriptArray) value).isEmpty();
             case STRING -> !((String) value).isEmpty();
             case NUMBER -> getAsBigDecimal().compareTo(new BigDecimal("0")) != 0;
             default -> true;
         };
     }
 
-    public @NotNull Reference[] getAsArray() throws ValueException {
+    public @NotNull ScriptArray getAsArray() throws ValueException {
         if (!isType(Type.ARRAY, Type.NULL))
             throw new ValueException(this, "Value " + this + " is not an array but: " + type);
-        if (value != null && value instanceof Reference[]) {
-            return (Reference[]) value;
+        if (value != null && value instanceof ScriptArray) {
+            return (ScriptArray) value;
         } else if (value == null) {
-            return new Reference[0];
+            return new ScriptArray();
         } else
             throw new ValueException(
                     this,
-                    "Value has type " + type + ", but it is neither null nor a Reference[] (actual class: " + value.getClass() + ")"
-            );
+                    "Value has type " + type + ", but it is neither null nor a ScriptArray (actual class: "
+                            + value.getClass() + ")");
     }
 
     public @NotNull ScriptObject getAsScriptObject() throws ValueException {
@@ -195,7 +191,8 @@ public class Value {
     }
 
     public @NotNull Function getAsFunction() throws ValueException {
-        if (type != Type.FUNCTION) throw new ValueException(this, "Value " + this + " is not a function.");
+        if (type != Type.FUNCTION)
+            throw new ValueException(this, "Value " + this + " is not a function.");
         assert value != null;
         return (Function) value;
     }
@@ -207,32 +204,39 @@ public class Value {
     }
 
     public @NotNull Class<?> getAsClass() throws ValueException {
-        if (type != Type.JAVA_CLASS) throw new ValueException(this, "Value " + this + " is not a class.");
+        if (type != Type.JAVA_CLASS)
+            throw new ValueException(this, "Value " + this + " is not a class.");
         assert value != null;
         return (Class<?>) value;
     }
 
     /**
-     * 对于 {@link Type#VOID} 和 {@link Type#NULL} 类型的值，返回 {@link Component#empty()}；<br />
+     * 对于 {@link Type#VOID} 和 {@link Type#NULL} 类型的值，返回
+     * {@link Component#empty()}；<br />
      * 对于 {@link Type#ADVENTURE_COMPONENT} 类型的值，直接返回；<br />
      * 对于 {@link Type#STRING} 类型的值，将其视为 MiniMessage 并反序列化为组件再返回；<br />
-     * 对于其他类型的值，视为纯文本，先用 {@link Value#toReadableString()} 转换为可读文本再用 {@link Component#text()} 包装为组件后返回；<br />
+     * 对于其他类型的值，视为纯文本，先用 {@link Value#toReadableString()} 转换为可读文本再用
+     * {@link Component#text()} 包装为组件后返回；<br />
      *
      */
     public @NotNull Component getAsAdventureComponent() {
-        if (value == null) return Component.empty();
+        if (value == null)
+            return Component.empty();
 
         if (type == Type.ADVENTURE_COMPONENT)
             return (Component) value;
         else if (type == Type.STRING)
-            return HyphaScript.miniMessage.deserialize((String) value).decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE);
+            return HyphaScript.miniMessage.deserialize((String) value).decorationIfAbsent(TextDecoration.ITALIC,
+                    TextDecoration.State.FALSE);
             // 尽力将所有内容转化为 Component
         else
-            return Component.text(toReadableString()).decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE);
+            return Component.text(toReadableString()).decorationIfAbsent(TextDecoration.ITALIC,
+                    TextDecoration.State.FALSE);
     }
 
     public @NotNull Class<?> getClassOfValue() throws ValueException {
-        if (value == null) throw new ValueException(this, "Impossible to get class of null value.");
+        if (value == null)
+            throw new ValueException(this, "Impossible to get class of null value.");
         return value.getClass();
     }
 
@@ -255,8 +259,10 @@ public class Value {
 
     public @NotNull String toReadableString() {
         // Both Type have null value
-        if (type == Type.NULL) return "null";
-        else if (type == Type.VOID) return "void";
+        if (type == Type.NULL)
+            return "null";
+        else if (type == Type.VOID)
+            return "void";
         assert value != null;
 
         try {
@@ -269,7 +275,7 @@ public class Value {
                 case FUNCTION -> ((Function) value).toString();
                 case JAVA_CLASS -> StringUtils.toString((Class<?>) value);
                 case JAVA_METHOD_HANDLES -> StringUtils.toString((MethodHandle[]) value);
-                case ARRAY -> StringUtils.toString((Reference[]) value);
+                case ARRAY -> StringUtils.toString((ScriptArray) value);
                 case ADVENTURE_COMPONENT -> StringUtils.toString((Component) value);
                 case JAVA_OBJECT -> StringUtils.toString(value);
                 default -> throw new IllegalStateException("Unexpected value: " + type);
@@ -289,8 +295,10 @@ public class Value {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         Value value1 = (Value) o;
         return Objects.equals(value, value1.value);
     }
@@ -313,7 +321,7 @@ public class Value {
         JAVA_CLASS(Class.class),
         JAVA_METHOD_HANDLES(MethodHandle[].class),
         ADVENTURE_COMPONENT(Component.class),
-        ARRAY(Reference[].class);
+        ARRAY(ScriptArray.class);
 
         private final @Nullable Class<?> clazz;
 

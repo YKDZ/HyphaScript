@@ -4,13 +4,12 @@ import cn.encmys.ykdz.forest.hyphascript.context.Context;
 import cn.encmys.ykdz.forest.hyphascript.exception.EvaluateException;
 import cn.encmys.ykdz.forest.hyphascript.lexer.token.Token;
 import cn.encmys.ykdz.forest.hyphascript.value.Reference;
+import cn.encmys.ykdz.forest.hyphascript.value.ScriptArray;
 import cn.encmys.ykdz.forest.hyphascript.value.Value;
 import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 
 import java.math.BigDecimal;
-import java.util.Arrays;
-import java.util.stream.Stream;
 
 public class Plus extends ASTNode {
     private final @NotNull ASTNode left;
@@ -37,31 +36,49 @@ public class Plus extends ASTNode {
         else if (leftRef.getReferredValue().isType(Value.Type.ADVENTURE_COMPONENT)) {
             Component left = leftRef.getReferredValue().getAsAdventureComponent();
             Component right = rightRef.getReferredValue().getAsAdventureComponent();
-            return ctx.getConfig().componentDecorationOverflow() ? new Reference(new Value(left.append(right))) : new Reference(new Value(Component.empty().append(left).append(right)));
+            return ctx.getConfig().componentDecorationOverflow() ? new Reference(new Value(left.append(right)))
+                    : new Reference(new Value(Component.empty().append(left).append(right)));
         } else if (leftRef.getReferredValue().isType(Value.Type.ARRAY)) {
-            Reference[] leftArray = leftRef.getReferredValue().getAsArray();
+            ScriptArray leftArray = leftRef.getReferredValue().getAsArray();
             // 不修改原始数组
             // 数组 + 数组
             if (rightRef.getReferredValue().isType(Value.Type.ARRAY)) {
-                Reference[] rightArray = rightRef.getReferredValue().getAsArray();
-                return new Reference(new Value(
-                        Stream.concat(Arrays.stream(leftArray.clone()), Arrays.stream(rightArray.clone()))
-                                .toArray(Reference[]::new)
-                ));
+                ScriptArray rightArray = rightRef.getReferredValue().getAsArray();
+                ScriptArray newArray = new ScriptArray();
+                int index = 0;
+                for (int i = 0; i < leftArray.length(); i++) {
+                    if (leftArray.containsKey(i)) {
+                        newArray.put(index, leftArray.get(i).clone());
+                    }
+                    index++;
+                }
+                for (int i = 0; i < rightArray.length(); i++) {
+                    if (rightArray.containsKey(i)) {
+                        newArray.put(index, rightArray.get(i).clone());
+                    }
+                    index++;
+                }
+                return new Reference(new Value(newArray));
             }
             // 数组 + 引用
             else {
-                return new Reference(new Value(
-                        Stream.concat(
-                                Stream.of(leftArray).map(Reference::clone),
-                                Stream.of(rightRef.clone())
-                        )
-                ));
+                ScriptArray newArray = new ScriptArray();
+                int index = 0;
+                for (int i = 0; i < leftArray.length(); i++) {
+                    if (leftArray.containsKey(i)) {
+                        newArray.put(index, leftArray.get(i).clone());
+                    }
+                    index++;
+                }
+                newArray.put(index, rightRef.clone());
+                return new Reference(new Value(newArray));
             }
         }
 
-        if (!leftRef.getReferredValue().isType(Value.Type.NUMBER) || !rightRef.getReferredValue().isType(Value.Type.NUMBER)) {
-            throw new EvaluateException(this, "+ operations require number operands but given: left: " + leftRef.getReferredValue() + ", right: " + rightRef.getReferredValue());
+        if (!leftRef.getReferredValue().isType(Value.Type.NUMBER)
+                || !rightRef.getReferredValue().isType(Value.Type.NUMBER)) {
+            throw new EvaluateException(this, "+ operations require number operands but given: left: "
+                    + leftRef.getReferredValue() + ", right: " + rightRef.getReferredValue());
         }
 
         BigDecimal l = leftRef.getReferredValue().getAsBigDecimal();

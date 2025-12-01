@@ -2,6 +2,8 @@ import cn.encmys.ykdz.forest.hyphascript.value.Reference;
 import cn.encmys.ykdz.forest.hyphascript.value.Value;
 import org.junit.jupiter.api.Test;
 
+import java.util.Map;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 public class ValueTest {
@@ -48,6 +50,17 @@ public class ValueTest {
     @Test
     void getAsArray() {
         Value value = new Value(new Reference[]{new Reference(new Value(1))});
-        assertEquals(1d, value.getAsArray()[0].getReferredValue().getAsBigDecimal().intValue());
+        assertEquals(1d, value.getAsArray().get(0).getReferredValue().getAsBigDecimal().intValue());
+    }
+
+    @Test
+    void getAsScriptObject() {
+        Value value = new Value(Map.of(
+                "a", 1d,
+                "b", 2d,
+                "c", Map.of("d", 3d)
+        ));
+        assertEquals(2d, value.getAsScriptObject().findMember("b")
+                .getReferredValue().getAsBigDecimal().intValue());
     }
 }

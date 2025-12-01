@@ -1,8 +1,7 @@
 package cn.encmys.ykdz.forest.hyphascript.utils;
 
 import cn.encmys.ykdz.forest.hyphascript.HyphaScript;
-import cn.encmys.ykdz.forest.hyphascript.value.Reference;
-import cn.encmys.ykdz.forest.hyphascript.value.Value;
+import cn.encmys.ykdz.forest.hyphascript.value.ScriptArray;
 import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,16 +36,21 @@ public class StringUtils {
                 .collect(Collectors.joining(", ", "[", "]"));
     }
 
-    public static @NotNull String toString(@NotNull Reference[] array) {
-        return Arrays.stream(array).map(reference -> {
-                    try {
-                        Value element = reference.getReferredValue();
-                        return element.toReadableString();
-                    } catch (Exception e) {
-                        return "[Error]";
-                    }
-                })
-                .collect(Collectors.joining(", ", "[", "]"));
+    public static @NotNull String toString(@NotNull ScriptArray array) {
+        List<String> parts = new ArrayList<>();
+        int len = array.length();
+        for (int i = 0; i < len; i++) {
+            if (array.containsKey(i)) {
+                try {
+                    parts.add(array.get(i).getReferredValue().toReadableString());
+                } catch (Exception e) {
+                    parts.add("[Error]");
+                }
+            } else {
+                parts.add("null");
+            }
+        }
+        return parts.stream().collect(Collectors.joining(", ", "[", "]"));
     }
 
     public static @NotNull String toString(@NotNull Component component) {

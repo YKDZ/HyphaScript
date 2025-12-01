@@ -4,6 +4,7 @@ import cn.encmys.ykdz.forest.hyphascript.context.Context;
 import cn.encmys.ykdz.forest.hyphascript.exception.EvaluateException;
 import cn.encmys.ykdz.forest.hyphascript.node.ASTNode;
 import cn.encmys.ykdz.forest.hyphascript.value.Reference;
+import cn.encmys.ykdz.forest.hyphascript.value.ScriptArray;
 import cn.encmys.ykdz.forest.hyphascript.value.Value;
 import org.jetbrains.annotations.NotNull;
 
@@ -17,10 +18,11 @@ public record ArrayPattern(@NotNull List<@NotNull UnpackPattern> elements) imple
             throw new EvaluateException(node, "Value is not an array, cannot unpack");
         }
 
-        Reference[] arr = value.getAsArray();
+        ScriptArray arr = value.getAsArray();
         for (int i = 0; i < elements.size(); i++) {
             UnpackPattern pattern = elements.get(i);
-            Value val = (i < arr.length) ? arr[i].getReferredValue() : new Value(null);
+            Reference ref = arr.get(i);
+            Value val = (ref != null) ? ref.getReferredValue() : new Value(null);
             pattern.apply(node, ctx, val, isConst);
         }
     }

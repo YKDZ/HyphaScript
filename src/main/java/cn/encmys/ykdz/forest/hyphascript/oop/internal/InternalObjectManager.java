@@ -48,7 +48,7 @@ public class InternalObjectManager {
         registerWithPrototype("Random", new RandomObject());
         registerWithPrototype("Command", new CommandObject());
         registerWithPrototype("Player", new PlayerObject());
-        registerWithPrototype("Console", new ConsoleObject());
+        registerWithPrototype("console", new ConsoleObject());
         registerWithPrototype("Server", new ServerObject());
         registerWithPrototype("Math", new MathObject());
         registerWithPrototype("PlaceholderAPI", new PlaceholderAPIObject());

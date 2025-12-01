@@ -2,9 +2,10 @@ package cn.encmys.ykdz.forest.hyphascript.node;
 
 import cn.encmys.ykdz.forest.hyphascript.context.Context;
 import cn.encmys.ykdz.forest.hyphascript.exception.EvaluateException;
-import cn.encmys.ykdz.forest.hyphascript.oop.ScriptObject;
 import cn.encmys.ykdz.forest.hyphascript.lexer.token.Token;
+import cn.encmys.ykdz.forest.hyphascript.oop.ScriptObject;
 import cn.encmys.ykdz.forest.hyphascript.value.Reference;
+import cn.encmys.ykdz.forest.hyphascript.value.ScriptArray;
 import cn.encmys.ykdz.forest.hyphascript.value.Value;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,7 +25,7 @@ public class ArrayAccess extends ASTNode {
     private final boolean isSlice;
 
     public ArrayAccess(@NotNull ASTNode target, @NotNull ASTNode from, @NotNull ASTNode to, @NotNull ASTNode step,
-            @NotNull Token startToken, @NotNull Token endToken, boolean isSlice) {
+                       @NotNull Token startToken, @NotNull Token endToken, boolean isSlice) {
         super(startToken, endToken);
         this.target = target;
         this.from = from;
@@ -55,7 +56,7 @@ public class ArrayAccess extends ASTNode {
 
         return switch (targetRef.getReferredValue().getType()) {
             case ARRAY -> {
-                Reference[] array = targetRef.getReferredValue().getAsArray();
+                ScriptArray array = targetRef.getReferredValue().getAsArray();
 
                 if (!isSlice) {
                     // 处理索引访问（需确保 from 存在）
@@ -66,8 +67,14 @@ public class ArrayAccess extends ASTNode {
                         int index = fromRef.getReferredValue().getAsBigDecimal().intValue();
                         // 处理负数索引
                         if (index < 0)
-                            index += array.length;
-                        yield array[index];
+                            index += array.length();
+
+                        Reference ref = array.get(index);
+                        if (ref == null) {
+                            ref = new Reference(new Value(null));
+                            array.put(index, ref);
+                        }
+                        yield ref;
                     } catch (Exception e) {
                         throw new EvaluateException(this, "Error during array index access", e);
                     }
@@ -87,39 +94,41 @@ public class ArrayAccess extends ASTNode {
                 // 若为 VOID，根据步长正负设置默认值
                 int fromIndex;
                 if (fromRef.getReferredValue().isType(Value.Type.VOID)) {
-                    fromIndex = (stepNum > 0) ? 0 : array.length - 1;
+                    fromIndex = (stepNum > 0) ? 0 : array.length() - 1;
                 } else {
                     fromIndex = fromRef.getReferredValue().getAsBigDecimal().intValue();
                     // 处理负数索引
                     if (fromIndex < 0)
-                        fromIndex += array.length;
+                        fromIndex += array.length();
                 }
 
                 // 若为 VOID，根据步长正负设置默认值
                 int toIndex;
                 if (toRef.getReferredValue().isType(Value.Type.VOID)) {
-                    toIndex = (stepNum > 0) ? array.length : -1;
+                    toIndex = (stepNum > 0) ? array.length() : -1;
                 } else {
                     toIndex = toRef.getReferredValue().getAsBigDecimal().intValue();
                     // 处理负数索引
                     if (toIndex < 0)
-                        toIndex += array.length;
+                        toIndex += array.length();
                 }
 
                 List<Reference> resultList = new ArrayList<>();
                 if (stepNum > 0) {
                     // 正向切片：start <= i < end
                     for (int i = fromIndex; i < toIndex; i += stepNum) {
-                        if (i < 0 || i >= array.length)
+                        if (i < 0 || i >= array.length())
                             break;
-                        resultList.add(array[i]);
+                        Reference ref = array.get(i);
+                        resultList.add(ref != null ? ref : new Reference(new Value(null)));
                     }
                 } else {
                     // 逆向切片：start >= i > end
                     for (int i = fromIndex; i > toIndex; i += stepNum) {
-                        if (i < 0 || i >= array.length)
+                        if (i < 0 || i >= array.length())
                             break;
-                        resultList.add(array[i]);
+                        Reference ref = array.get(i);
+                        resultList.add(ref != null ? ref : new Reference(new Value(null)));
                     }
                 }
 
@@ -213,10 +222,9 @@ public class ArrayAccess extends ASTNode {
 
                 yield object.findMember(index);
             }
-            default ->
-                throw new EvaluateException(this,
-                        "Array access can only be cast on nested objects, string and array. But given: "
-                                + targetRef.getReferredValue().getType());
+            default -> throw new EvaluateException(this,
+                    "Array access can only be cast on nested objects, string and array. But given: "
+                            + targetRef.getReferredValue().getType());
         };
     }
 
