@@ -52,6 +52,8 @@ public class Lexer {
         KEYWORDS.put("instanceof", Token.Type.INSTANCE_OF);
         KEYWORDS.put("sleep", Token.Type.SLEEP);
         KEYWORDS.put("java", Token.Type.JAVA);
+        KEYWORDS.put("in", Token.Type.IN);
+        KEYWORDS.put("of", Token.Type.OF);
     }
 
     private final @NotNull String script;
@@ -73,7 +75,8 @@ public class Lexer {
         while (currentChar != EOF) {
             boolean hasNewline = skipWhitespaceAndComments();
 
-            if (currentChar == EOF) break;
+            if (currentChar == EOF)
+                break;
 
             if (hasNewline && shouldInsertSemicolon(lastToken, currentChar)) {
                 Token finishToken = new Token(Token.Type.FINISH, ";", currentLine, currentColumn);
@@ -84,7 +87,8 @@ public class Lexer {
             tokens.add(token);
             lastToken = token;
 
-            if (token.type() == Token.Type.EOF) break;
+            if (token.type() == Token.Type.EOF)
+                break;
         }
 
         if (shouldInsertSemicolon(lastToken, EOF)) {
@@ -99,20 +103,26 @@ public class Lexer {
     }
 
     private boolean shouldInsertSemicolon(Token lastToken, char nextChar) {
-        if (lastToken == null) return false;
-        if (lastToken.type() == Token.Type.FINISH) return false;
-        if (lastToken.type() == Token.Type.LEFT_BRACE) return false;
+        if (lastToken == null)
+            return false;
+        if (lastToken.type() == Token.Type.FINISH)
+            return false;
+        if (lastToken.type() == Token.Type.LEFT_BRACE)
+            return false;
 
         boolean canEndStatement = switch (lastToken.type()) {
             case IDENTIFIER, NUMBER, STRING, CHAR, BOOLEAN, NULL,
-                 RETURN, BREAK, CONTINUE,
-                 BACKTICK -> true;
+                    RETURN, BREAK, CONTINUE,
+                    BACKTICK ->
+                true;
             default -> false;
         };
 
-        if (!canEndStatement) return false;
+        if (!canEndStatement)
+            return false;
 
-        if (nextChar == EOF) return true;
+        if (nextChar == EOF)
+            return true;
         if (nextChar == '}') {
             return switch (lastToken.type()) {
                 case RETURN, BREAK, CONTINUE -> true;
@@ -123,9 +133,11 @@ public class Lexer {
         // Check for operators that usually continue a statement
         return switch (nextChar) {
             case '(', ')', '[', ']', '{', '+', '-', '*', '/', '%', '=', '<', '>', '!', '&', '|', '?', ':', '.',
-                 ',' -> false;
+                    ',' ->
+                false;
             default -> {
-                // Check for keywords that shouldn't be preceded by a semicolon (like else, catch, finally, while)
+                // Check for keywords that shouldn't be preceded by a semicolon (like else,
+                // catch, finally, while)
                 if (Character.isAlphabetic(nextChar)) {
                     String nextWord = peekWord();
                     yield !nextWord.equals("else") &&
@@ -208,7 +220,8 @@ public class Lexer {
         boolean hasNewline = false;
         advance(); // 跳过 '*'
         while (!(currentChar == '*' && nextChar() == '/')) {
-            if (currentChar == NEWLINE) hasNewline = true;
+            if (currentChar == NEWLINE)
+                hasNewline = true;
             if (currentChar == EOF) {
                 throw new LexerException("Unterminated multi-line comment", currentLine, currentColumn);
             }
@@ -279,8 +292,10 @@ public class Lexer {
             case BACKTICK -> readTemplateString();
             case SINGLE_QUOTE -> readChar();
             default -> {
-                if (Character.isDigit(currentChar)) yield readNumber();
-                if (isIdentifierStart(currentChar)) yield readIdentifier();
+                if (Character.isDigit(currentChar))
+                    yield readNumber();
+                if (isIdentifierStart(currentChar))
+                    yield readIdentifier();
                 throw new LexerException("Unexpected character: " + currentChar, currentLine, currentColumn);
             }
         };
@@ -316,7 +331,8 @@ public class Lexer {
         }
         if ((first == '<' || first == '>') && currentChar == first) {
             advance();
-            return new Token(first == '<' ? Token.Type.SHIFT_LEFT : Token.Type.SHIFT_RIGHT, first + "" + first, currentLine, currentColumn);
+            return new Token(first == '<' ? Token.Type.SHIFT_LEFT : Token.Type.SHIFT_RIGHT, first + "" + first,
+                    currentLine, currentColumn);
         }
         return new Token(getComparisonType(String.valueOf(first)), String.valueOf(first), currentLine, currentColumn);
     }
@@ -364,7 +380,8 @@ public class Lexer {
                 while (currentChar != '}' && currentChar != EOF) {
                     tokens.add(nextToken());
                 }
-                if (currentChar == '}') advance(); // 跳过闭合 }
+                if (currentChar == '}')
+                    advance(); // 跳过闭合 }
 
             } else {
                 // 普通字符直接累积
@@ -392,7 +409,8 @@ public class Lexer {
         boolean hasDecimal = false;
 
         while (Character.isDigit(currentChar) || (currentChar == '.' && !hasDecimal)) {
-            if (currentChar == '.') hasDecimal = true;
+            if (currentChar == '.')
+                hasDecimal = true;
             sb.append(currentChar);
             advance();
         }
@@ -444,7 +462,7 @@ public class Lexer {
             case 'f' -> '\f';
             case '\'', '"', '\\' -> currentChar;
             default ->
-                    throw new LexerException("Invalid escape sequence: \\" + currentChar, currentLine, currentColumn);
+                throw new LexerException("Invalid escape sequence: \\" + currentChar, currentLine, currentColumn);
         };
     }
 

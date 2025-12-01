@@ -35,6 +35,10 @@ public class Const extends ASTNode {
         return new Reference();
     }
 
+    public @NotNull String getName() {
+        return name;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

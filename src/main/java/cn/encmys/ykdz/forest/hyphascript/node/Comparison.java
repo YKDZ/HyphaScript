@@ -16,7 +16,8 @@ public class Comparison extends ASTNode {
     private final @NotNull ASTNode left;
     private final @NotNull ASTNode right;
 
-    public Comparison(@NotNull Token.Type operator, @NotNull ASTNode left, @NotNull ASTNode right, @NotNull Token startToken, @NotNull Token endToken) {
+    public Comparison(@NotNull Token.Type operator, @NotNull ASTNode left, @NotNull ASTNode right,
+            @NotNull Token startToken, @NotNull Token endToken) {
         super(startToken, endToken);
         this.operator = operator;
         this.left = left;
@@ -28,7 +29,8 @@ public class Comparison extends ASTNode {
         Reference leftRef = left.evaluate(ctx);
         Reference rightRef = right.evaluate(ctx);
 
-        if (leftRef.getReferredValue().isType(Value.Type.NUMBER) && rightRef.getReferredValue().isType(Value.Type.NUMBER)) {
+        if (leftRef.getReferredValue().isType(Value.Type.NUMBER)
+                && rightRef.getReferredValue().isType(Value.Type.NUMBER)) {
             BigDecimal lComp = leftRef.getReferredValue().getAsBigDecimal();
             BigDecimal rComp = rightRef.getReferredValue().getAsBigDecimal();
             return switch (operator) {
@@ -37,37 +39,51 @@ public class Comparison extends ASTNode {
                 case GREATER_EQUAL -> new Reference(new Value(lComp.compareTo(rComp) >= 0));
                 case LESS_EQUAL -> new Reference(new Value(lComp.compareTo(rComp) <= 0));
                 case EQUAL_EQUAL ->
-                        new Reference(new Value(DecimalUtils.isEquals(lComp, rComp, ctx.getConfig().equalRoundingMode())));
+                    new Reference(new Value(DecimalUtils.isEquals(lComp, rComp, ctx.getConfig().equalRoundingMode())));
                 case BANG_EQUALS ->
-                        new Reference(new Value(!DecimalUtils.isEquals(lComp, rComp, ctx.getConfig().equalRoundingMode())));
+                    new Reference(new Value(!DecimalUtils.isEquals(lComp, rComp, ctx.getConfig().equalRoundingMode())));
                 default -> throw new EvaluateException(this, "Unsupported operator: " + operator);
             };
-        } else if (leftRef.getReferredValue().isType(Value.Type.BOOLEAN, Value.Type.NULL) && rightRef.getReferredValue().isType(Value.Type.BOOLEAN, Value.Type.NULL)) {
+        } else if (leftRef.getReferredValue().isType(Value.Type.BOOLEAN, Value.Type.NULL)
+                && rightRef.getReferredValue().isType(Value.Type.BOOLEAN, Value.Type.NULL)) {
             return switch (operator) {
                 case EQUAL_EQUAL ->
-                        new Reference(new Value(leftRef.getReferredValue().getAsBoolean() == rightRef.getReferredValue().getAsBoolean()));
+                    new Reference(new Value(
+                            leftRef.getReferredValue().getAsBoolean() == rightRef.getReferredValue().getAsBoolean()));
                 case BANG_EQUALS ->
-                        new Reference(new Value(leftRef.getReferredValue().getAsBoolean() != rightRef.getReferredValue().getAsBoolean()));
+                    new Reference(new Value(
+                            leftRef.getReferredValue().getAsBoolean() != rightRef.getReferredValue().getAsBoolean()));
                 default -> throw new EvaluateException(this, "Unsupported operator for boolean value: " + operator);
             };
-        } else if (leftRef.getReferredValue().isType(Value.Type.STRING, Value.Type.NULL) && rightRef.getReferredValue().isType(Value.Type.STRING, Value.Type.NULL)) {
+        } else if (leftRef.getReferredValue().isType(Value.Type.STRING, Value.Type.NULL)
+                && rightRef.getReferredValue().isType(Value.Type.STRING, Value.Type.NULL)) {
             return switch (operator) {
                 case EQUAL_EQUAL ->
-                        new Reference(new Value(Objects.equals(leftRef.getReferredValue().getAsString(), rightRef.getReferredValue().getAsString())));
+                    new Reference(new Value(Objects.equals(leftRef.getReferredValue().getAsString(),
+                            rightRef.getReferredValue().getAsString())));
                 case BANG_EQUALS ->
-                        new Reference(new Value(!Objects.equals(leftRef.getReferredValue().getAsString(), rightRef.getReferredValue().getAsString())));
+                    new Reference(new Value(!Objects.equals(leftRef.getReferredValue().getAsString(),
+                            rightRef.getReferredValue().getAsString())));
                 default -> throw new EvaluateException(this, "Unsupported operator for string value: " + operator);
             };
-        } else if (leftRef.getReferredValue().isType(Value.Type.FUNCTION, Value.Type.SCRIPT_OBJECT) && rightRef.getReferredValue().isType(Value.Type.SCRIPT_OBJECT, Value.Type.FUNCTION)) {
+        } else if (leftRef.getReferredValue().isType(Value.Type.FUNCTION, Value.Type.SCRIPT_OBJECT)
+                && rightRef.getReferredValue().isType(Value.Type.SCRIPT_OBJECT, Value.Type.FUNCTION)) {
             return switch (operator) {
                 case EQUAL_EQUAL ->
-                        new Reference(new Value(leftRef.getReferredValue().getAsScriptObject().equals(rightRef.getReferredValue().getAsScriptObject())));
+                    new Reference(new Value(leftRef.getReferredValue().getAsScriptObject()
+                            .equals(rightRef.getReferredValue().getAsScriptObject())));
                 case BANG_EQUALS ->
-                        new Reference(new Value(!leftRef.getReferredValue().getAsScriptObject().equals(rightRef.getReferredValue().getAsScriptObject())));
+                    new Reference(new Value(!leftRef.getReferredValue().getAsScriptObject()
+                            .equals(rightRef.getReferredValue().getAsScriptObject())));
                 default -> throw new EvaluateException(this, "Unsupported operator for script object: " + operator);
             };
         } else {
-            return new Reference(new Value(leftRef.getReferredValue().equals(rightRef.getReferredValue().getValue())));
+            boolean isEqual = leftRef.getReferredValue().equals(rightRef.getReferredValue());
+            return switch (operator) {
+                case EQUAL_EQUAL -> new Reference(new Value(isEqual));
+                case BANG_EQUALS -> new Reference(new Value(!isEqual));
+                default -> throw new EvaluateException(this, "Unsupported operator: " + operator);
+            };
         }
     }
 }

@@ -63,7 +63,7 @@ public class Assignment extends ASTNode {
                         || targetRef.getReferredValue().isType(Value.Type.CHAR)) {
                     final String targetString = targetRef.getReferredValue().getAsString();
                     // 视作 String
-                    final String valueString = valueRef.getReferredValue().toString();
+                    final String valueString = valueRef.getReferredValue().getAsString();
                     setValueOfRef(ctx, targetRef, new Value(targetString.concat(valueString)));
                     yield new Reference();
                 } else if (targetRef.getReferredValue().isType(Value.Type.ARRAY)) {

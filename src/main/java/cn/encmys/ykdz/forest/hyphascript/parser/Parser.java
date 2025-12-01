@@ -65,6 +65,11 @@ public class Parser {
             Token.Type nextType = ctx.current().type();
             if (ctx.isIgnoredInfix(nextType))
                 break;
+
+            if (isAmbiguousInfix(nextType) && ctx.previous().line() < ctx.current().line()) {
+                break;
+            }
+
             ExpressionParser.Infix infix = infixParsers.get(nextType);
             if (infix == null)
                 break;
@@ -72,6 +77,10 @@ public class Parser {
         }
 
         return left;
+    }
+
+    private boolean isAmbiguousInfix(Token.Type type) {
+        return type == Token.Type.LEFT_BRACKET || type == Token.Type.LEFT_PAREN;
     }
 
     public @NotNull ASTNode parseExpression(@NotNull PrecedenceTable.Precedence precedence, Token.Type excludeInfix) {

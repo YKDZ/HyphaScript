@@ -15,6 +15,7 @@ import java.lang.reflect.Array;
 import java.math.BigDecimal;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.IntStream;
 
 public class Value {
     @NotNull
@@ -43,18 +44,17 @@ public class Value {
      */
     public Value(@Nullable Object value) {
         this.type = calType(value);
-        
+
         if (value != null && type == Type.ARRAY && value.getClass().isArray()) {
-            ScriptArray array = new ScriptArray();
-            int len = Array.getLength(value);
-            for (int i = 0; i < len; i++) {
+            final ScriptArray array = new ScriptArray();
+            IntStream.range(0, Array.getLength(value)).forEach(i -> {
                 Object elem = Array.get(value, i);
                 if (elem instanceof Reference) {
                     array.put(i, (Reference) elem);
                 } else {
                     array.put(i, new Reference(new Value(elem)));
                 }
-            }
+            });
             this.value = array;
         } else if (type == Type.SCRIPT_OBJECT && value instanceof Map) {
             final ScriptObject scriptObject = new ScriptObject();
@@ -91,16 +91,16 @@ public class Value {
             return Type.BOOLEAN;
         } else if (value instanceof Function) {
             return Type.FUNCTION;
+        } else if (value instanceof MethodHandle[]) {
+            return Type.JAVA_METHOD_HANDLES;
+        } else if (value.getClass().isArray() || value instanceof ScriptArray) {
+            return Type.ARRAY;
         } else if (value instanceof ScriptObject || value instanceof Map) {
             return Type.SCRIPT_OBJECT;
         } else if (value instanceof Class<?>) {
             return Type.JAVA_CLASS;
         } else if (value instanceof Component) {
             return Type.ADVENTURE_COMPONENT;
-        } else if (value instanceof MethodHandle[]) {
-            return Type.JAVA_METHOD_HANDLES;
-        } else if (value.getClass().isArray()) {
-            return Type.ARRAY;
         } else {
             return Type.JAVA_OBJECT;
         }
@@ -140,7 +140,12 @@ public class Value {
         }
     }
 
-    public @NotNull String getAsString() throws ValueException {
+    /**
+     * 尽力将所有值转换为字符串
+     *
+     * @see Value#toReadableString()
+     */
+    public @NotNull String getAsString() {
         if (value instanceof Character)
             return String.valueOf((char) value);
         else if (value instanceof String)
@@ -155,16 +160,19 @@ public class Value {
         return value == null ? '\0' : (char) value;
     }
 
+    /**
+     * 尽力将所有值转换为布尔值<br/>
+     * 遵守 <a href="https://developer.mozilla.org/en-US/docs/Glossary/Truthy">JS 规则</a>
+     *
+     */
     public boolean getAsBoolean() {
-        if (type == Type.NULL)
+        if (value == null)
             return false;
-        assert value != null;
 
         return switch (type) {
             case BOOLEAN -> (boolean) value;
-            case ARRAY -> !((ScriptArray) value).isEmpty();
             case STRING -> !((String) value).isEmpty();
-            case NUMBER -> getAsBigDecimal().compareTo(new BigDecimal("0")) != 0;
+            case NUMBER -> getAsBigDecimal().compareTo(BigDecimal.ZERO) != 0;
             default -> true;
         };
     }
@@ -211,6 +219,7 @@ public class Value {
     }
 
     /**
+     * 尽力将所有值转换为组件<br/>
      * 对于 {@link Type#VOID} 和 {@link Type#NULL} 类型的值，返回
      * {@link Component#empty()}；<br />
      * 对于 {@link Type#ADVENTURE_COMPONENT} 类型的值，直接返回；<br />
@@ -228,7 +237,6 @@ public class Value {
         else if (type == Type.STRING)
             return HyphaScript.miniMessage.deserialize((String) value).decorationIfAbsent(TextDecoration.ITALIC,
                     TextDecoration.State.FALSE);
-            // 尽力将所有内容转化为 Component
         else
             return Component.text(toReadableString()).decorationIfAbsent(TextDecoration.ITALIC,
                     TextDecoration.State.FALSE);

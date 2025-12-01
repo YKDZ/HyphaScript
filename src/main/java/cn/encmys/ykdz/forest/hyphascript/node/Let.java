@@ -15,7 +15,8 @@ public class Let extends ASTNode {
     private final ASTNode initValue;
     private final boolean isExported;
 
-    public Let(@NotNull String name, @NotNull ASTNode initValue, boolean isExported, @NotNull Token startToken, @NotNull Token endToken) {
+    public Let(@NotNull String name, @NotNull ASTNode initValue, boolean isExported, @NotNull Token startToken,
+            @NotNull Token endToken) {
         super(startToken, endToken);
         this.name = name;
         this.initValue = initValue;
@@ -28,19 +29,27 @@ public class Let extends ASTNode {
         init.setConst(false);
         try {
             ctx.declareMember(name, init);
-            if (isExported) ctx.setExported(name);
+            if (isExported)
+                ctx.setExported(name);
         } catch (Exception e) {
             throw new EvaluateException(this, "Error declaring reference " + name + " in " + ctx, e);
         }
         return new Reference();
     }
 
+    public @NotNull String getName() {
+        return name;
+    }
+
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         Let let = (Let) o;
-        return isExported == let.isExported && Objects.equals(name, let.name) && Objects.equals(initValue, let.initValue);
+        return isExported == let.isExported && Objects.equals(name, let.name)
+                && Objects.equals(initValue, let.initValue);
     }
 
     @Override

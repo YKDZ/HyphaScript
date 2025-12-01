@@ -14,11 +14,20 @@ public class Unpack extends ASTNode {
     @NotNull
     private final UnpackPattern pattern;
 
-    public Unpack(boolean isConst, @NotNull ASTNode from, @NotNull UnpackPattern pattern, @NotNull Token startToken, @NotNull Token endToken) {
+    public Unpack(boolean isConst, @NotNull ASTNode from, @NotNull UnpackPattern pattern, @NotNull Token startToken,
+            @NotNull Token endToken) {
         super(startToken, endToken);
         this.isConst = isConst;
         this.from = from;
         this.pattern = pattern;
+    }
+
+    public @NotNull UnpackPattern getPattern() {
+        return pattern;
+    }
+
+    public boolean isConst() {
+        return isConst;
     }
 
     @Override

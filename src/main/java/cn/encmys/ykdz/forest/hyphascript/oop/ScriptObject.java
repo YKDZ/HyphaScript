@@ -100,6 +100,10 @@ public class ScriptObject implements Cloneable {
         }
     }
 
+    public @NotNull @Unmodifiable Set<String> getMemberKeys() {
+        return Collections.unmodifiableSet(members.keySet());
+    }
+
     public <T> @NotNull Optional<T> findMember(@NotNull String name, @NotNull Class<T> type) {
         Value value = findMember(name).getReferredValue();
         Value.Type target = Value.Type.fromClass(type);

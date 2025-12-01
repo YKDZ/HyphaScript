@@ -20,10 +20,14 @@ public class InternalObjectManager {
 
     public static final @NotNull ScriptObject OBJECT;
     public static final @NotNull ScriptObject OBJECT_PROTOTYPE;
+    public static final @NotNull ScriptObject STRING;
+    public static final @NotNull ScriptObject STRING_PROTOTYPE;
     public static final @NotNull ScriptObject FUNCTION;
     public static final @NotNull ScriptObject FUNCTION_PROTOTYPE;
     public static final @NotNull ScriptObject ARRAY;
     public static final @NotNull ScriptObject ARRAY_PROTOTYPE;
+    public static final @NotNull ScriptObject ARRAY_ITERATOR;
+    public static final @NotNull ScriptObject ARRAY_ITERATOR_PROTOTYPE;
     public static final @NotNull ScriptObject NUMBER;
     public static final @NotNull ScriptObject NUMBER_PROTOTYPE;
     public static final @NotNull ScriptObject FUTURE;
@@ -33,6 +37,9 @@ public class InternalObjectManager {
     static {
         OBJECT = registerWithPrototype("Object", new ObjectObject());
         OBJECT_PROTOTYPE = getPrototype(OBJECT);
+
+        STRING = registerWithPrototype("String", new StringObject());
+        STRING_PROTOTYPE = getPrototype(STRING);
 
         FUNCTION = registerWithPrototype("Function", new FunctionObject());
         FUNCTION_PROTOTYPE = getPrototype(FUNCTION);
@@ -45,6 +52,9 @@ public class InternalObjectManager {
 
         FUTURE = register("Future", new FutureObject());
 
+        ARRAY_ITERATOR = registerWithPrototype("ArrayIterator", new ArrayIteratorObject());
+        ARRAY_ITERATOR_PROTOTYPE = getPrototype(ARRAY_ITERATOR);
+
         registerWithPrototype("Random", new RandomObject());
         registerWithPrototype("Command", new CommandObject());
         registerWithPrototype("Player", new PlayerObject());
@@ -56,8 +66,7 @@ public class InternalObjectManager {
         registerWithPrototype("MiniMessage", new MiniMessageObject());
 
         objects.forEach((key, value) -> GLOBAL_OBJECT.declareMember(
-                key, new Reference(new Value(value), true)
-        ));
+                key, new Reference(new Value(value), true)));
     }
 
     private InternalObjectManager() {

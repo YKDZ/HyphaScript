@@ -9,13 +9,14 @@ import cn.encmys.ykdz.forest.hyphascript.value.ScriptArray;
 import cn.encmys.ykdz.forest.hyphascript.value.Value;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @ObjectName("Object")
 public class ObjectObject extends InternalObject {
     @Static
     @Function("create")
-    @FunctionParas({"object"})
+    @FunctionParas({ "object" })
     public static @NotNull ScriptObject create(@NotNull Context ctx) {
         try {
             ScriptObject prototype = ctx.findMember("object").getReferredValue().getAsScriptObject();
@@ -27,7 +28,7 @@ public class ObjectObject extends InternalObject {
 
     @Static
     @Function("call")
-    @FunctionParas({"func", "target"})
+    @FunctionParas({ "func", "target" })
     @FunctionUncertainPara("paras")
     public static @NotNull ScriptObject call(@NotNull Context ctx) {
         try {
@@ -62,6 +63,25 @@ public class ObjectObject extends InternalObject {
             return object.getLocalMembers().values().toArray(Reference[]::new);
         } catch (Exception e) {
             return new Reference[0];
+        }
+    }
+
+    @Function("entries")
+    public static @NotNull ScriptArray entries(@NotNull Context ctx) {
+        try {
+            final ScriptObject object = ctx.findMember("this").getReferredValue().getAsScriptObject();
+            final ScriptArray entries = new ScriptArray();
+
+            for (Map.Entry<String, Reference> entry : object.getLocalMembers().entrySet()) {
+                ScriptArray newEntry = new ScriptArray();
+                newEntry.put(0, entry.getValue());
+                newEntry.put(1, new Reference(new Value(entry.getKey())));
+                entries.push(new Reference(new Value(newEntry)));
+            }
+
+            return entries;
+        } catch (Exception e) {
+            return new ScriptArray();
         }
     }
 

@@ -44,13 +44,13 @@ public class ArrayAccess extends ASTNode {
         // 字符串和数组的切片访问索引都需要是数字
         if (targetRef.getReferredValue().isType(Value.Type.ARRAY, Value.Type.STRING)) {
             if (!fromRef.getReferredValue().isType(Value.Type.NUMBER, Value.Type.NULL, Value.Type.VOID)) {
-                throw new EvaluateException(this, "From index of array access must be decimal >= 0.");
+                throw new EvaluateException(this, "From index of array access must be decimal >= 0, but given " + fromRef.getReferredValue().toReadableString());
             }
             if (!stepRef.getReferredValue().isType(Value.Type.NUMBER, Value.Type.NULL, Value.Type.VOID)) {
-                throw new EvaluateException(this, "Step index of array access must be big decimal >= 0.");
+                throw new EvaluateException(this, "Step index of array access must be big decimal >= 0, but given " + stepRef.getReferredValue().toReadableString());
             }
             if (!toRef.getReferredValue().isType(Value.Type.NUMBER, Value.Type.NULL, Value.Type.VOID)) {
-                throw new EvaluateException(this, "To index of array access must be big decimal >= 0.");
+                throw new EvaluateException(this, "To index of array access must be big decimal >= 0, but given " + toRef.getReferredValue().toReadableString());
             }
         }
 

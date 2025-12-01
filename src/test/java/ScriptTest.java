@@ -5,6 +5,7 @@ import cn.encmys.ykdz.forest.hyphascript.oop.ScriptObject;
 import cn.encmys.ykdz.forest.hyphascript.oop.internal.core.MathObject;
 import cn.encmys.ykdz.forest.hyphascript.script.EvaluateResult;
 import cn.encmys.ykdz.forest.hyphascript.script.Script;
+import cn.encmys.ykdz.forest.hyphascript.value.Reference;
 import cn.encmys.ykdz.forest.hyphascript.value.Value;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextColor;
@@ -62,46 +63,58 @@ public class ScriptTest {
 
     @Test
     void array() {
-//        Context ctx = Context.Builder.create()
-//                .with("arr",
-//                        new Value(new Reference[]{new Reference(new Value(1)), new Reference(new Value(2)),
-//                                new Reference(new Value(3)), new Reference(new Value(4))}))
-//                .with("str", new Value("YKDZ Miao~"))
-//                .build();
-//        assertEquals(5d, evaluate("arr[0] + arr[3]", ctx).getAsBigDecimal().intValue());
-//        assertEquals(10d, evaluate("arr.sum()", ctx).getAsBigDecimal().intValue());
-//        assertEquals(4d, evaluate("arr.length()", ctx).getAsBigDecimal().intValue());
-//        assertEquals(10d, evaluate("arr[0:4].sum()", ctx).getAsBigDecimal().intValue());
-//        assertEquals(5d, evaluate("arr[1:3].sum()", ctx).getAsBigDecimal().intValue());
-//        assertEquals(3d, evaluate("arr[:2].sum()", ctx).getAsBigDecimal().intValue());
-//        assertEquals(3d, evaluate("arr[:-2].sum()", ctx).getAsBigDecimal().intValue());
-//        assertEquals(2d, evaluate("arr[-3:-2].sum()", ctx).getAsBigDecimal().intValue());
-//        assertEquals(4d, evaluate("arr[::2].sum()", ctx).getAsBigDecimal().intValue());
-//        assertEquals(6d, evaluate("arr[1::2].sum()", ctx).getAsBigDecimal().intValue());
-//        assertEquals(6d, evaluate("arr[1:100:2].sum()", ctx).getAsBigDecimal().intValue());
-//        assertEquals(0d, evaluate("arr[10::2].sum()", ctx).getAsBigDecimal().intValue());
-//        assertEquals(0d, evaluate("arr[3:1].sum()", ctx).getAsBigDecimal().intValue());
-//        assertEquals(7d, evaluate("arr[2:].sum()", ctx).getAsBigDecimal().intValue());
-//        assertEquals(4d, evaluate("arr[::-1][0]", ctx).getAsBigDecimal().intValue());
-//
-//        assertEquals("Miao", evaluate("str[-5:-1]", ctx).getAsString());
-//        assertEquals("YKDZ", evaluate("str[0:4]", ctx).getAsString());
-//        assertEquals("Miao", evaluate("str[5:9]", ctx).getAsString());
-//        assertEquals("Miao~", evaluate("str[5:100]", ctx).getAsString());
-//        assertEquals("YKDZ", evaluate("str[:4]", ctx).getAsString());
-//        assertEquals("Miao~", evaluate("str[5:]", ctx).getAsString());
-//        assertEquals("YD io", evaluate("str[::2]", ctx).getAsString());
-//        assertEquals("~oaiM ZDKY", evaluate("str[::-1]", ctx).getAsString());
+        Context ctx = Context.Builder.create()
+                .with("arr",
+                        new Value(new Reference[]{new Reference(new Value(1)),
+                                new Reference(new Value(2)),
+                                new Reference(new Value(3)),
+                                new Reference(new Value(4))}))
+                .with("str", new Value("YKDZ Miao~"))
+                .build();
+        assertEquals(5d, evaluate("arr[0] + arr[3]", ctx).getAsBigDecimal().intValue());
+        assertEquals(10d, evaluate("arr.sum()", ctx).getAsBigDecimal().intValue());
+        assertEquals(4d, evaluate("arr.length()", ctx).getAsBigDecimal().intValue());
+        assertEquals(10d, evaluate("arr[0:4].sum()", ctx).getAsBigDecimal().intValue());
+        assertEquals(5d, evaluate("arr[1:3].sum()", ctx).getAsBigDecimal().intValue());
+        assertEquals(3d, evaluate("arr[:2].sum()", ctx).getAsBigDecimal().intValue());
+        assertEquals(3d, evaluate("arr[:-2].sum()", ctx).getAsBigDecimal().intValue());
+        assertEquals(2d, evaluate("arr[-3:-2].sum()", ctx).getAsBigDecimal().intValue());
+        assertEquals(4d, evaluate("arr[::2].sum()", ctx).getAsBigDecimal().intValue());
+        assertEquals(6d, evaluate("arr[1::2].sum()", ctx).getAsBigDecimal().intValue());
+        assertEquals(6d, evaluate("arr[1:100:2].sum()", ctx).getAsBigDecimal().intValue());
+        assertEquals(0d, evaluate("arr[10::2].sum()", ctx).getAsBigDecimal().intValue());
+        assertEquals(0d, evaluate("arr[3:1].sum()", ctx).getAsBigDecimal().intValue());
+        assertEquals(7d, evaluate("arr[2:].sum()", ctx).getAsBigDecimal().intValue());
+        assertEquals(4d, evaluate("arr[::-1][0]", ctx).getAsBigDecimal().intValue());
 
-        Context ctx = new Context();
-        evaluate("""
+        assertEquals("Miao", evaluate("str[-5:-1]", ctx).getAsString());
+        assertEquals("YKDZ", evaluate("str[0:4]", ctx).getAsString());
+        assertEquals("Miao", evaluate("str[5:9]", ctx).getAsString());
+        assertEquals("Miao~", evaluate("str[5:100]", ctx).getAsString());
+        assertEquals("YKDZ", evaluate("str[:4]", ctx).getAsString());
+        assertEquals("Miao~", evaluate("str[5:]", ctx).getAsString());
+        assertEquals("YD io", evaluate("str[::2]", ctx).getAsString());
+        assertEquals("~oaiM ZDKY", evaluate("str[::-1]", ctx).getAsString());
+
+        assertEquals(45d, evaluate("""
                 const result = []
                 for (let i = 0; i < 10; i += 1) {
                     result[i] = i
                 }
                 result.sum()
-                """, ctx);
-        System.out.println(ctx.findMember("result"));
+                """).getAsBigDecimal().intValue());
+
+        assertEquals(1d, evaluate("""
+                [1, 2, 3, 4, 5].filter(v => v == 1).sum()
+                """).getAsBigDecimal().intValue());
+        assertEquals(55d, evaluate("""
+                [1, 2, 3, 4, 5].map(v => v ** 2).sum()
+                """).getAsBigDecimal().intValue());
+        assertEquals(55d, evaluate("""
+                const result = []
+                [1, 2, 3, 4, 5].forEach(v => result.push(v ** 2))
+                result.sum()
+                """).getAsBigDecimal().intValue());
     }
 
     @Test
@@ -280,8 +293,10 @@ public class ScriptTest {
 
         ctx.setConfig(new Context.Config(RoundingMode.HALF_UP, RoundingMode.HALF_UP, false, true));
 
-        assertEquals("<bold><white>Hello World<!italic> :)", evaluate("component + \" :)\"", ctx).toReadableString());
-        assertEquals("<bold><white>Hello World<!italic> :)", evaluate("`${component} :)`", ctx).toReadableString());
+        assertEquals("<bold><white>Hello World<!italic> :)",
+                evaluate("component + \" :)\"", ctx).toReadableString());
+        assertEquals("<bold><white>Hello World<!italic> :)",
+                evaluate("`${component} :)`", ctx).toReadableString());
     }
 
     @Test
@@ -319,17 +334,99 @@ public class ScriptTest {
 
     @Test
     void number() {
+        assertEquals(3d, evaluate("(-3).abs()").getAsBigDecimal().intValue());
+        assertEquals(-3.5f, evaluate("(-3.5).floatValue()").getAsBigDecimal().floatValue());
+        assertEquals(-3d, evaluate("(-3.5).intValue()").getAsBigDecimal().intValue());
+        assertEquals(-3.5, evaluate("(-3.5).doubleValue()").getAsBigDecimal().doubleValue());
+    }
+
+    @Test
+    void forInAndOf() {
+        assertEquals(6d, evaluate("""
+                let sum = 0
+                let arr = [1, 2, 3]
+                for (let v of arr) {
+                    sum += v
+                }
+                sum
+                """).getAsBigDecimal().intValue());
+
         assertEquals(3d, evaluate("""
-                (-3).abs()
+                let sum = 0
+                let arr = [10, 20, 30]
+                for (let i in arr) {
+                    sum += i
+                }
+                sum
                 """).getAsBigDecimal().intValue());
-        assertEquals(-3.5f, evaluate("""
-                (-3.5).floatValue()
-                """).getAsBigDecimal().floatValue());
-        assertEquals(-3d, evaluate("""
-                (-3.5).intValue()
+
+        assertEquals("ab", evaluate("""
+                let keys = ""
+                let obj = {a: 1, b: 2}
+                for (let key in obj) {
+                    keys += key
+                }
+                keys
+                """).getAsString());
+
+        assertEquals("[\"VAULT - 0\", \"EXP - 1\"]", evaluate("""
+                let keys = ["VAULT", "EXP"]
+                const result = []
+                
+                for (const [i, key] of keys.entries()) {
+                    result[i] = key + " - " + i
+                }
+                
+                result
+                """).getAsString());
+    }
+
+    @Test
+    void iterator() {
+        assertEquals(6d, evaluate("""
+                                const myIterable = {
+                                    __iterator__: () => {
+                                        let index = 0
+                                        const data = [1, 2, 3]
+                                        return {
+                                            next: () => {
+                                                if (index < data.length()) {
+                                                    let val = data[index]
+                                                    index += 1
+                                                    return { value: val, done: false }
+                                                } else {
+                                                    return { value: null, done: true }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                
+                                let sum = 0
+                                for (let v of myIterable) {
+                                    sum += v
+                                }
+                sum
                 """).getAsBigDecimal().intValue());
-        assertEquals(-3.5, evaluate("""
-                (-3.5).doubleValue()
-                """).getAsBigDecimal().doubleValue());
+    }
+
+    @Test
+    void string() {
+        assertEquals("ABCD", evaluate("\"abcd\".upper()").getAsString());
+        assertEquals("efgh", evaluate("\"EFGH\".lower()").getAsString());
+        assertEquals("shopping-mode", evaluate("\"SHOPPING_MODE\".lower().replace(\"_\", \"-\")").getAsString());
+    }
+
+    @Test
+    void bool() {
+        assertTrue(evaluate("true").getAsBoolean());
+        assertTrue(evaluate("[]").getAsBoolean());
+        assertTrue(evaluate("[] != null").getAsBoolean());
+        assertTrue(evaluate("null == null").getAsBoolean());
+        assertFalse(evaluate("false").getAsBoolean());
+        assertFalse(evaluate("\"\"").getAsBoolean());
+        assertFalse(evaluate("0").getAsBoolean());
+        assertFalse(evaluate("-0").getAsBoolean());
+        assertFalse(evaluate("null").getAsBoolean());
     }
 }

@@ -25,7 +25,7 @@ public class ValueTest {
         assertFalse(new Value(0).getAsBoolean());
         assertFalse(new Value("").getAsBoolean());
         assertFalse(new Value(null).getAsBoolean());
-        assertFalse(new Value(new int[]{}).getAsBoolean());
+        assertTrue(new Value(new int[]{}).getAsBoolean());
     }
 
     @Test

@@ -2,9 +2,9 @@ package cn.encmys.ykdz.forest.hyphascript.node;
 
 import cn.encmys.ykdz.forest.hyphascript.context.Context;
 import cn.encmys.ykdz.forest.hyphascript.exception.EvaluateException;
+import cn.encmys.ykdz.forest.hyphascript.lexer.token.Token;
 import cn.encmys.ykdz.forest.hyphascript.oop.ScriptObject;
 import cn.encmys.ykdz.forest.hyphascript.oop.internal.InternalObjectManager;
-import cn.encmys.ykdz.forest.hyphascript.lexer.token.Token;
 import cn.encmys.ykdz.forest.hyphascript.utils.ReflectionUtils;
 import cn.encmys.ykdz.forest.hyphascript.value.Reference;
 import cn.encmys.ykdz.forest.hyphascript.value.Value;
@@ -50,6 +50,9 @@ public class MemberAccess extends ASTNode {
 
             case NUMBER:
                 yield InternalObjectManager.NUMBER_PROTOTYPE.findMember(member);
+
+            case STRING:
+                yield InternalObjectManager.STRING_PROTOTYPE.findMember(member);
 
             case JAVA_CLASS:
                 final Class<?> clazz = target.getAsClass();
