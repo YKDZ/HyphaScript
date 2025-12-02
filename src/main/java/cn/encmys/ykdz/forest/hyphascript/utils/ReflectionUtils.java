@@ -15,9 +15,13 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class ReflectionUtils {
     private static final MethodHandles.Lookup LOOKUP = MethodHandles.lookup();
+    private static final Map<Class<?>, Map<String, MethodHandle[]>> METHOD_CACHE = new ConcurrentHashMap<>();
+    private static final Map<Class<?>, MethodHandle[]> CONSTRUCTOR_CACHE = new ConcurrentHashMap<>();
 
     /**
      * 根据包名字符串解析出类名
@@ -38,40 +42,63 @@ public class ReflectionUtils {
         return LOOKUP.unreflect(method);
     }
 
-    public static MethodHandle @NotNull [] getMethodHandlesByName(@NotNull Class<?> targetClass, @NotNull String methodName) {
-        List<MethodHandle> methodHandles = new ArrayList<>();
+    public static MethodHandle @NotNull [] getMethodHandlesByName(@NotNull Class<?> targetClass,
+            @NotNull String methodName) {
+        return METHOD_CACHE.computeIfAbsent(targetClass, k -> new ConcurrentHashMap<>())
+                .computeIfAbsent(methodName, k -> {
+                    List<MethodHandle> methodHandles = new ArrayList<>();
+                    Method[] methods = targetClass.getDeclaredMethods();
 
-        Method[] methods = targetClass.getDeclaredMethods();
-
-        for (Method method : methods) {
-            if (method.getName().equals(methodName)) {
-                try {
-                    methodHandles.add(getMethodHandle(method));
-                } catch (IllegalAccessException ignored) {
-                }
-            }
-        }
-
-        return methodHandles.toArray(new MethodHandle[0]);
+                    for (Method method : methods) {
+                        if (method.getName().equals(methodName)) {
+                            try {
+                                methodHandles.add(getMethodHandle(method));
+                            } catch (IllegalAccessException ignored) {
+                            }
+                        }
+                    }
+                    return methodHandles.toArray(new MethodHandle[0]);
+                });
     }
 
     public static @Nullable MethodHandle selectFirstMatchingConstructor(
             @NotNull Class<?> targetClass,
-            @Nullable Object @NotNull [] evaluatedArgs
-    ) throws Throwable {
-        Constructor<?>[] constructors = targetClass.getDeclaredConstructors();
+            @Nullable Object @NotNull [] evaluatedArgs) throws Throwable {
+        MethodHandle[] constructors = CONSTRUCTOR_CACHE.computeIfAbsent(targetClass, k -> {
+            Constructor<?>[] rawConstructors = targetClass.getDeclaredConstructors();
+            List<MethodHandle> handles = new ArrayList<>();
+            for (Constructor<?> constructor : rawConstructors) {
+                try {
+                    handles.add(LOOKUP.unreflectConstructor(constructor));
+                } catch (IllegalAccessException e) {
+                    // Ignore inaccessible constructors
+                }
+            }
+            return handles.toArray(new MethodHandle[0]);
+        });
 
-        for (Constructor<?> constructor : constructors) {
-            // 若为静态方法，则 evaluatedArgs 的第一个元素永远是类本身
-            Class<?>[] paramTypes = constructor.getParameterTypes();
-            if (paramTypes.length != evaluatedArgs.length) {
+        for (MethodHandle handle : constructors) {
+            // Constructor MethodHandle type: (args...) -> Instance
+            MethodType type = handle.type();
+            // Note: unreflectConstructor returns a MethodHandle that takes the arguments
+            // and returns the instance.
+            // It does NOT take the class as the first argument (unlike static methods in
+            // some contexts, but here we are creating an instance).
+            // However, the original code logic for selectFirstMatchingConstructor iterated
+            // over Constructor<?> objects directly.
+            // We need to adapt the logic to work with MethodHandles or cache Constructor<?>
+            // objects.
+            // Caching MethodHandles is better for performance.
+
+            // Let's check the parameter count.
+            if (type.parameterCount() != evaluatedArgs.length) {
                 continue;
             }
 
             boolean isCompatible = true;
             for (int i = 0; i < evaluatedArgs.length; i++) {
                 Object arg = evaluatedArgs[i];
-                Class<?> paramType = paramTypes[i];
+                Class<?> paramType = type.parameterType(i);
 
                 if (arg == null) {
                     if (paramType.isPrimitive()) {
@@ -100,7 +127,7 @@ public class ReflectionUtils {
                 }
             }
             if (isCompatible) {
-                return MethodHandles.lookup().unreflectConstructor(constructor);
+                return handle;
             }
         }
         return null;
@@ -108,8 +135,7 @@ public class ReflectionUtils {
 
     public static @Nullable MethodHandle selectFirstMatchingMethodHandle(
             @NotNull MethodHandle @NotNull [] methodHandles,
-            @Nullable Object @NotNull [] evaluatedArgs
-    ) {
+            @Nullable Object @NotNull [] evaluatedArgs) {
         for (MethodHandle handle : methodHandles) {
             // 若为静态方法，则 evaluatedArgs 的第一个元素永远是类本身
             boolean isStatic = isStatic(handle);
@@ -159,14 +185,22 @@ public class ReflectionUtils {
 
     @Contract(pure = true)
     private static @Nullable Class<?> getBoxedType(Class<?> primitiveType) {
-        if (primitiveType == int.class) return Integer.class;
-        if (primitiveType == long.class) return Long.class;
-        if (primitiveType == double.class) return Double.class;
-        if (primitiveType == float.class) return Float.class;
-        if (primitiveType == boolean.class) return Boolean.class;
-        if (primitiveType == char.class) return Character.class;
-        if (primitiveType == short.class) return Short.class;
-        if (primitiveType == byte.class) return Byte.class;
+        if (primitiveType == int.class)
+            return Integer.class;
+        if (primitiveType == long.class)
+            return Long.class;
+        if (primitiveType == double.class)
+            return Double.class;
+        if (primitiveType == float.class)
+            return Float.class;
+        if (primitiveType == boolean.class)
+            return Boolean.class;
+        if (primitiveType == char.class)
+            return Character.class;
+        if (primitiveType == short.class)
+            return Short.class;
+        if (primitiveType == byte.class)
+            return Byte.class;
         return null;
     }
 
@@ -179,7 +213,8 @@ public class ReflectionUtils {
                 type != double.class && type != Double.class;
     }
 
-    public static Object invokeMethodHandle(@NotNull MethodHandle methodHandle, @NotNull Object[] arguments) throws Throwable {
+    public static Object invokeMethodHandle(@NotNull MethodHandle methodHandle, @NotNull Object[] arguments)
+            throws Throwable {
         if (isStatic(methodHandle) && arguments.length > 0) {
             arguments = Arrays.copyOfRange(arguments, 1, arguments.length);
         }
@@ -196,7 +231,8 @@ public class ReflectionUtils {
             }
         }
 
-        return transformedArguments.length == 0 ? methodHandle.invoke() : methodHandle.invokeWithArguments(transformedArguments);
+        return transformedArguments.length == 0 ? methodHandle.invoke()
+                : methodHandle.invokeWithArguments(transformedArguments);
     }
 
     private static Object convertBigDecimal(@NotNull BigDecimal bigDecimal, @NotNull Class<?> targetType) {

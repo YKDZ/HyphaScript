@@ -111,7 +111,7 @@ public class Lexer {
             return false;
 
         boolean canEndStatement = switch (lastToken.type()) {
-            case IDENTIFIER, NUMBER, STRING, CHAR, BOOLEAN, NULL,
+            case IDENTIFIER, NUMBER, STRING, BOOLEAN, NULL,
                     RETURN, BREAK, CONTINUE,
                     BACKTICK ->
                 true;
@@ -139,25 +139,26 @@ public class Lexer {
                 // Check for keywords that shouldn't be preceded by a semicolon (like else,
                 // catch, finally, while)
                 if (Character.isAlphabetic(nextChar)) {
-                    String nextWord = peekWord();
-                    yield !nextWord.equals("else") &&
-                            !nextWord.equals("catch") &&
-                            !nextWord.equals("finally") &&
-                            !nextWord.equals("while");
+                    yield !peekKeyword("else") &&
+                            !peekKeyword("catch") &&
+                            !peekKeyword("finally") &&
+                            !peekKeyword("while");
                 }
                 yield true;
             }
         };
     }
 
-    private String peekWord() {
-        int tempPos = position;
-        StringBuilder sb = new StringBuilder();
-        while (tempPos < script.length() && isIdentifierPart(script.charAt(tempPos))) {
-            sb.append(script.charAt(tempPos));
-            tempPos++;
+    private boolean peekKeyword(String keyword) {
+        int len = keyword.length();
+        if (position + len > script.length())
+            return false;
+        for (int i = 0; i < len; i++) {
+            if (script.charAt(position + i) != keyword.charAt(i))
+                return false;
         }
-        return sb.toString();
+        // Ensure the next char is not an identifier part (to match whole word)
+        return position + len >= script.length() || !isIdentifierPart(script.charAt(position + len));
     }
 
     private void advance() {
@@ -288,9 +289,8 @@ public class Lexer {
                 }
                 yield parseSingleCharToken(Token.Type.DOT);
             }
-            case DOUBLE_QUOTE -> readString();
+            case DOUBLE_QUOTE, SINGLE_QUOTE -> readString(currentChar);
             case BACKTICK -> readTemplateString();
-            case SINGLE_QUOTE -> readChar();
             default -> {
                 if (Character.isDigit(currentChar))
                     yield readNumber();
@@ -405,43 +405,31 @@ public class Lexer {
 
     @Contract(" -> new")
     private @NotNull Token readNumber() {
-        StringBuilder sb = new StringBuilder();
+        int start = position;
         boolean hasDecimal = false;
 
         while (Character.isDigit(currentChar) || (currentChar == '.' && !hasDecimal)) {
             if (currentChar == '.')
                 hasDecimal = true;
-            sb.append(currentChar);
             advance();
         }
 
-        return new Token(Token.Type.NUMBER, sb.toString(), currentLine, currentColumn);
+        return new Token(Token.Type.NUMBER, script.substring(start, position), currentLine, currentColumn);
     }
 
-    @Contract(" -> new")
-    private @NotNull Token readChar() {
-        advance(); // 跳过起始的 '
-        char value = handleEscapeSequences();
-        if (currentChar != SINGLE_QUOTE) {
-            throw new LexerException("Unclosed character literal", currentLine, currentColumn);
-        }
-        advance(); // 跳过结束的 '
-        return new Token(Token.Type.CHAR, String.valueOf(value), currentLine, currentColumn);
-    }
-
-    @Contract(" -> new")
-    private @NotNull Token readString() {
-        advance(); // 跳过起始的 "
+    @Contract("_ -> new")
+    private @NotNull Token readString(char delimiter) {
+        advance(); // 跳过起始的引号
         StringBuilder sb = new StringBuilder();
 
-        while (currentChar != DOUBLE_QUOTE && currentChar != EOF) {
+        while (currentChar != delimiter && currentChar != EOF) {
             sb.append(handleEscapeSequences());
         }
 
-        if (currentChar != DOUBLE_QUOTE) {
+        if (currentChar != delimiter) {
             throw new LexerException("Unclosed string literal", currentLine, currentColumn);
         }
-        advance(); // 跳过结束的 "
+        advance(); // 跳过结束的引号
 
         return new Token(Token.Type.STRING, sb.toString(), currentLine, currentColumn);
     }
@@ -467,13 +455,12 @@ public class Lexer {
     }
 
     private @NotNull Token readIdentifier() {
-        StringBuilder sb = new StringBuilder();
+        int start = position;
         while (isIdentifierPart(currentChar)) {
-            sb.append(currentChar);
             advance();
         }
 
-        String identifier = sb.toString();
+        String identifier = script.substring(start, position);
         if ("else".equals(identifier) && nextChar() == 'i') {
             return parseElseIf();
         }

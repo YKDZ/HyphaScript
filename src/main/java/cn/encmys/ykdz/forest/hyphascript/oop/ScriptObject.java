@@ -11,12 +11,11 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 public class ScriptObject implements Cloneable {
-    protected final @NotNull Map<String, Reference> members = new ConcurrentHashMap<>();
-    private final @NotNull Map<@NotNull String, @NotNull Reference> exportedMembers = new ConcurrentHashMap<>();
+    protected final @NotNull Map<String, Reference> members = new HashMap<>();
+    private final @NotNull Map<@NotNull String, @NotNull Reference> exportedMembers = new HashMap<>();
     protected @NotNull Value __proto__;
 
     public ScriptObject() {

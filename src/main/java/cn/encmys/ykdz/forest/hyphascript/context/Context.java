@@ -13,7 +13,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class Context extends ScriptObject implements Cloneable {
-    private @NotNull List<@NotNull String> importedJavaClasses = new ArrayList<>();
+    private @Nullable List<@NotNull String> importedJavaClasses;
     private @NotNull Config config = new Config(RoundingMode.HALF_UP, RoundingMode.HALF_UP, false, false);
 
     /**
@@ -46,10 +46,14 @@ public class Context extends ScriptObject implements Cloneable {
     }
 
     public @NotNull List<String> getImportedJavaClasses() {
-        return Collections.unmodifiableList(importedJavaClasses);
+        return importedJavaClasses == null ? Collections.emptyList()
+                : Collections.unmodifiableList(importedJavaClasses);
     }
 
     public void addImportedJavaClasses(@NotNull String list) {
+        if (importedJavaClasses == null) {
+            importedJavaClasses = new ArrayList<>();
+        }
         importedJavaClasses.add(list);
     }
 
@@ -58,8 +62,11 @@ public class Context extends ScriptObject implements Cloneable {
         Context cloned = new Context();
         cloned.members.putAll(this.members);
         cloned.__proto__ = this.__proto__;
-        cloned.importedJavaClasses = this.importedJavaClasses;
-        cloned.config = new Config(this.config.divRoundingMode, this.config.equalRoundingMode, this.config.runtimeTypeCheck, this.config.componentDecorationOverflow);
+        if (this.importedJavaClasses != null) {
+            cloned.importedJavaClasses = new ArrayList<>(this.importedJavaClasses);
+        }
+        cloned.config = new Config(this.config.divRoundingMode, this.config.equalRoundingMode,
+                this.config.runtimeTypeCheck, this.config.componentDecorationOverflow);
         return cloned;
     }
 
@@ -70,9 +77,9 @@ public class Context extends ScriptObject implements Cloneable {
     }
 
     public record Config(@NotNull RoundingMode divRoundingMode,
-                         @NotNull RoundingMode equalRoundingMode,
-                         boolean runtimeTypeCheck,
-                         boolean componentDecorationOverflow) {
+            @NotNull RoundingMode equalRoundingMode,
+            boolean runtimeTypeCheck,
+            boolean componentDecorationOverflow) {
     }
 
     public static class Builder {
@@ -98,7 +105,8 @@ public class Context extends ScriptObject implements Cloneable {
         }
 
         /**
-         * Create a context builder. The parent of this context will be provided parent context
+         * Create a context builder. The parent of this context will be provided parent
+         * context
          *
          * @return Builder
          */

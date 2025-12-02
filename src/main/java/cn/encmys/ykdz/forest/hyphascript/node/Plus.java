@@ -10,6 +10,10 @@ import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 
 import java.math.BigDecimal;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.List;
 
 public class Plus extends ASTNode {
     private final @NotNull ASTNode left;
@@ -23,9 +27,48 @@ public class Plus extends ASTNode {
 
     @Override
     public @NotNull Reference evaluate(@NotNull Context ctx) {
-        Reference leftRef = left.evaluate(ctx);
-        Reference rightRef = right.evaluate(ctx);
+        // Flatten nested Plus nodes to optimize chain operations
+        List<ASTNode> operands = new ArrayList<>();
+        flattenOperands(operands);
 
+        // Evaluate the first operand
+        Reference accumulator = operands.get(0).evaluate(ctx);
+
+        // Optimization for String concatenation
+        if (accumulator.getReferredValue().isType(Value.Type.STRING)) {
+            StringBuilder sb = new StringBuilder(accumulator.getReferredValue().getAsString());
+            for (int i = 1; i < operands.size(); i++) {
+                Reference next = operands.get(i).evaluate(ctx);
+                // In Plus logic, if left is String, right is always converted to String
+                sb.append(next.getReferredValue().getAsString());
+            }
+            return new Reference(new Value(sb.toString()));
+        }
+
+        // Fallback for non-string types (Number, Array, Component, etc.)
+        for (int i = 1; i < operands.size(); i++) {
+            Reference next = operands.get(i).evaluate(ctx);
+            accumulator = performAdd(accumulator, next, ctx);
+        }
+
+        return accumulator;
+    }
+
+    private void flattenOperands(List<ASTNode> operands) {
+        Deque<ASTNode> stack = new ArrayDeque<>();
+        ASTNode current = this;
+        while (current instanceof Plus) {
+            stack.push(((Plus) current).right);
+            current = ((Plus) current).left;
+        }
+        stack.push(current); // The leftmost leaf
+
+        while (!stack.isEmpty()) {
+            operands.add(stack.pop());
+        }
+    }
+
+    private Reference performAdd(Reference leftRef, Reference rightRef, Context ctx) {
         // 字符串链接中所有对象都被当作字符串
         if (leftRef.getReferredValue().isType(Value.Type.STRING)) {
             String l = leftRef.getReferredValue().getAsString();
