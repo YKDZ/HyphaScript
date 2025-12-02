@@ -1,13 +1,13 @@
 package cn.encmys.ykdz.forest.hyphascript.parser.expression.prefix;
 
 import cn.encmys.ykdz.forest.hyphascript.exception.ParserException;
+import cn.encmys.ykdz.forest.hyphascript.lexer.token.Token;
 import cn.encmys.ykdz.forest.hyphascript.node.ASTNode;
 import cn.encmys.ykdz.forest.hyphascript.node.Identifier;
 import cn.encmys.ykdz.forest.hyphascript.node.LiteralScriptObject;
 import cn.encmys.ykdz.forest.hyphascript.parser.ParseContext;
 import cn.encmys.ykdz.forest.hyphascript.parser.PrecedenceTable;
 import cn.encmys.ykdz.forest.hyphascript.parser.expression.ExpressionParser;
-import cn.encmys.ykdz.forest.hyphascript.lexer.token.Token;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -20,7 +20,7 @@ public class LiteralScriptObjectParser implements ExpressionParser.Prefix {
 
         Map<String, ASTNode> members = new HashMap<>();
         while (!ctx.match(Token.Type.RIGHT_BRACE)) {
-            if (ctx.match(Token.Type.IDENTIFIER, Token.Type.STRING, Token.Type.NUMBER, Token.Type.CHAR)) {
+            if (ctx.match(Token.Type.IDENTIFIER, Token.Type.STRING, Token.Type.NUMBER)) {
                 Token identifier = ctx.previous();
                 if (!ctx.match(Token.Type.COLON)) {
                     members.put(identifier.value(), new Identifier(identifier.value(), identifier));

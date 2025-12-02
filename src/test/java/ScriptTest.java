@@ -412,6 +412,8 @@ public class ScriptTest {
 
     @Test
     void string() {
+        assertEquals("YKDZ", evaluate("'YKDZ'").getAsString());
+        assertEquals('Y', evaluate("'YKDZ'").getAsChar());
         assertEquals("ABCD", evaluate("\"abcd\".upper()").getAsString());
         assertEquals("efgh", evaluate("\"EFGH\".lower()").getAsString());
         assertEquals("shopping-mode", evaluate("\"SHOPPING_MODE\".lower().replace(\"_\", \"-\")").getAsString());

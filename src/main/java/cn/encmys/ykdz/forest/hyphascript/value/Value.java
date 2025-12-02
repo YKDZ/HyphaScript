@@ -64,6 +64,8 @@ public class Value {
                 scriptObject.declareMember(name, ref);
             });
             this.value = scriptObject;
+        } else if (type == Type.STRING && value instanceof Character) {
+            this.value = String.valueOf(value);
         } else {
             this.value = value;
         }
@@ -84,7 +86,7 @@ public class Value {
         } else if (value instanceof Number) {
             return Type.NUMBER;
         } else if (value instanceof Character) {
-            return Type.CHAR;
+            return Type.STRING;
         } else if (value instanceof String) {
             return Type.STRING;
         } else if (value instanceof Boolean) {
@@ -155,9 +157,14 @@ public class Value {
     }
 
     public char getAsChar() throws ValueException {
-        if (!isType(Type.CHAR, Type.NULL))
-            throw new ValueException(this, "Value " + this + " is not a char but: " + type);
-        return value == null ? '\0' : (char) value;
+        if (value == null) return '\0';
+
+        if (isType(Type.STRING)) {
+            String s = (String) value;
+            return s.isEmpty() ? '\0' : s.charAt(0);
+        }
+        
+        throw new ValueException(this, "Value " + this + " is not a string (for char conversion) but: " + type);
     }
 
     /**
@@ -261,7 +268,6 @@ public class Value {
             case NUMBER -> getAsBigDecimal();
             case JAVA_METHOD_HANDLES -> getAsMethodHandles();
             case ADVENTURE_COMPONENT -> getAsAdventureComponent();
-            case CHAR -> getAsChar();
         };
     }
 
@@ -275,7 +281,6 @@ public class Value {
 
         try {
             return switch (type) {
-                case CHAR -> String.valueOf((char) value);
                 case NUMBER -> StringUtils.toString((Number) value);
                 case STRING -> "\"" + value + "\"";
                 case BOOLEAN -> Boolean.toString((boolean) value);
@@ -319,7 +324,6 @@ public class Value {
     public enum Type {
         VOID(null),
         NULL(null),
-        CHAR(Character.class),
         NUMBER(Number.class),
         STRING(String.class),
         BOOLEAN(Boolean.class),

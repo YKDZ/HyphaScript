@@ -41,7 +41,7 @@ public class Assignment extends ASTNode {
         return switch (operator) {
             case EQUALS -> {
                 Value val = valueRef.getReferredValue();
-                if (val.isType(Value.Type.NUMBER, Value.Type.STRING, Value.Type.BOOLEAN, Value.Type.CHAR)) {
+                if (val.isType(Value.Type.NUMBER, Value.Type.STRING, Value.Type.BOOLEAN)) {
                     setValueOfRef(ctx, targetRef, new Value(val.getValue()));
                 } else {
                     setValueOfRef(ctx, targetRef, val);
@@ -50,7 +50,7 @@ public class Assignment extends ASTNode {
             }
             case COLON_EQUALS -> {
                 Value val = valueRef.getReferredValue();
-                if (val.isType(Value.Type.NUMBER, Value.Type.STRING, Value.Type.BOOLEAN, Value.Type.CHAR)) {
+                if (val.isType(Value.Type.NUMBER, Value.Type.STRING, Value.Type.BOOLEAN)) {
                     setValueOfRef(ctx, targetRef, new Value(val.getValue()));
                 } else {
                     setValueOfRef(ctx, targetRef, val);
@@ -59,8 +59,7 @@ public class Assignment extends ASTNode {
             }
             case PLUS_EQUALS -> {
                 // += 字符拼接
-                if (targetRef.getReferredValue().isType(Value.Type.STRING)
-                        || targetRef.getReferredValue().isType(Value.Type.CHAR)) {
+                if (targetRef.getReferredValue().isType(Value.Type.STRING)) {
                     final String targetString = targetRef.getReferredValue().getAsString();
                     // 视作 String
                     final String valueString = valueRef.getReferredValue().getAsString();

@@ -129,7 +129,6 @@ public class Parser {
         registerPrefix(Token.Type.TYPEOF, new UnaryParser());
         registerPrefix(Token.Type.NOT, new UnaryParser());
         registerPrefix(Token.Type.BOOLEAN, new BooleanParser());
-        registerPrefix(Token.Type.CHAR, new CharParser());
         registerPrefix(Token.Type.IDENTIFIER, new IdentifierParser());
         registerPrefix(Token.Type.LEFT_BRACE, new LiteralScriptObjectParser());
         registerPrefix(Token.Type.NEW, new NewParser());
