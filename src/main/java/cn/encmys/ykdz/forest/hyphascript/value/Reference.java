@@ -34,8 +34,8 @@ public class Reference implements Cloneable {
 
     public void setReferredValue(@NotNull Value value, boolean typeCheck) {
         if (isConst) throw new ReferenceException(this, "Tried to reassign-value for const variable");
-        if (typeCheck && this.value.getType() != value.getType())
-            throw new ReferenceException(this, "Type error. New type is " + value.getType() + " but old type is " + this.value.getType());
+        if (typeCheck && this.value.type() != value.type())
+            throw new ReferenceException(this, "Type error. New type is " + value.type() + " but old type is " + this.value.type());
         this.value = value;
     }
 

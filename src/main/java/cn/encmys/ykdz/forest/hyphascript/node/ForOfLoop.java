@@ -23,7 +23,7 @@ public class ForOfLoop extends ASTNode {
     private final ASTNode body;
 
     public ForOfLoop(@NotNull ASTNode variable, @NotNull ASTNode target, @NotNull ASTNode body,
-            @NotNull Token startToken, @NotNull Token endToken) {
+                     @NotNull Token startToken, @NotNull Token endToken) {
         super(startToken, endToken);
         this.variable = variable;
         this.target = target;
@@ -35,20 +35,20 @@ public class ForOfLoop extends ASTNode {
         Value targetValue = target.evaluate(ctx).getReferredValue();
 
         Reference iteratorMethodRef = MemberAccess.findMemberFromTarget(targetValue, "__iterator__", true, this);
-        if (iteratorMethodRef.getReferredValue().getType() != Value.Type.FUNCTION) {
+        if (iteratorMethodRef.getReferredValue().type() != Value.Type.FUNCTION) {
             throw new EvaluateException(this, "Target is not iterable (no __iterator__ method).");
         }
 
         Function iteratorMethod = iteratorMethodRef.getReferredValue().getAsFunction();
         Value iteratorValue = iteratorMethod.call(targetValue, Collections.emptyList(), ctx).getReferredValue();
 
-        if (iteratorValue.getType() != Value.Type.SCRIPT_OBJECT) {
+        if (iteratorValue.type() != Value.Type.SCRIPT_OBJECT) {
             throw new EvaluateException(this, "__iterator__ must return an object.");
         }
 
         ScriptObject iterator = iteratorValue.getAsScriptObject();
         Reference nextMethodRef = iterator.findMember("next");
-        if (nextMethodRef.getReferredValue().getType() != Value.Type.FUNCTION) {
+        if (nextMethodRef.getReferredValue().type() != Value.Type.FUNCTION) {
             throw new EvaluateException(this, "Iterator must have a next method.");
         }
         Function nextMethod = nextMethodRef.getReferredValue().getAsFunction();
@@ -73,7 +73,7 @@ public class ForOfLoop extends ASTNode {
 
         while (true) {
             Value resultValue = nextMethod.call(new Value(iterator), Collections.emptyList(), ctx).getReferredValue();
-            if (resultValue.getType() != Value.Type.SCRIPT_OBJECT) {
+            if (resultValue.type() != Value.Type.SCRIPT_OBJECT) {
                 throw new EvaluateException(this, "Iterator.next() must return an object.");
             }
             ScriptObject result = resultValue.getAsScriptObject();

@@ -42,7 +42,7 @@ public class Assignment extends ASTNode {
             case EQUALS -> {
                 Value val = valueRef.getReferredValue();
                 if (val.isType(Value.Type.NUMBER, Value.Type.STRING, Value.Type.BOOLEAN)) {
-                    setValueOfRef(ctx, targetRef, new Value(val.getValue()));
+                    setValueOfRef(ctx, targetRef, new Value(val.value()));
                 } else {
                     setValueOfRef(ctx, targetRef, val);
                 }
@@ -51,7 +51,7 @@ public class Assignment extends ASTNode {
             case COLON_EQUALS -> {
                 Value val = valueRef.getReferredValue();
                 if (val.isType(Value.Type.NUMBER, Value.Type.STRING, Value.Type.BOOLEAN)) {
-                    setValueOfRef(ctx, targetRef, new Value(val.getValue()));
+                    setValueOfRef(ctx, targetRef, new Value(val.value()));
                 } else {
                     setValueOfRef(ctx, targetRef, val);
                 }

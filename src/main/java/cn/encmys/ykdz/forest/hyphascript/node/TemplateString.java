@@ -15,7 +15,7 @@ public class TemplateString extends ASTNode {
     private final boolean isOptional;
 
     public TemplateString(@NotNull List<ASTNode> parts, boolean isOptional, @NotNull Token startToken,
-            @NotNull Token endToken) {
+                          @NotNull Token endToken) {
         super(startToken, endToken);
         this.parts = parts;
         this.isOptional = isOptional;
@@ -28,7 +28,7 @@ public class TemplateString extends ASTNode {
     private static @NotNull Reference buildComponent(@NotNull List<Value> parts, boolean isOptional, boolean overflow) {
         Component result = null;
         for (Value value : parts) {
-            switch (value.getType()) {
+            switch (value.type()) {
                 case VOID -> {
                 }
                 case NULL -> {
@@ -51,7 +51,7 @@ public class TemplateString extends ASTNode {
     private static @NotNull Reference buildString(@NotNull List<Value> parts, boolean isOptional) {
         StringBuilder result = new StringBuilder();
         for (Value value : parts) {
-            switch (value.getType()) {
+            switch (value.type()) {
                 case VOID -> {
                 }
                 case NULL -> {

@@ -54,7 +54,7 @@ public class ArrayAccess extends ASTNode {
             }
         }
 
-        return switch (targetRef.getReferredValue().getType()) {
+        return switch (targetRef.getReferredValue().type()) {
             case ARRAY -> {
                 ScriptArray array = targetRef.getReferredValue().getAsArray();
 
@@ -224,7 +224,7 @@ public class ArrayAccess extends ASTNode {
             }
             default -> throw new EvaluateException(this,
                     "Array access can only be cast on nested objects, string and array. But given: "
-                            + targetRef.getReferredValue().getType());
+                            + targetRef.getReferredValue().type());
         };
     }
 

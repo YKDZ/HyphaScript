@@ -13,7 +13,7 @@ public record ObjectPattern(@NotNull Map<@NotNull String, @NotNull UnpackPattern
 
     @Override
     public void apply(@NotNull ASTNode node, @NotNull Context ctx, @NotNull Value value, boolean isConst) {
-        if (value.getType() != Value.Type.SCRIPT_OBJECT) {
+        if (value.type() != Value.Type.SCRIPT_OBJECT) {
             throw new EvaluateException(node, "Value is not an object, cannot unpack");
         }
 

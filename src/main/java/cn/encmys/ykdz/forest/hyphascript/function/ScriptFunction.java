@@ -88,8 +88,8 @@ public class ScriptFunction extends ScriptObject implements Function, Cloneable 
         }
         // 若函数的返回值是函数
         // 则当前上下文链需要被储存到返回的函数中
-        if (!result.getReferredValue().isType(Value.Type.VOID) && result.getReferredValue().getValue() instanceof ScriptFunction) {
-            ((ScriptFunction) result.getReferredValue().getValue()).capturedContext = localContext;
+        if (!result.getReferredValue().isType(Value.Type.VOID) && result.getReferredValue().value() instanceof ScriptFunction) {
+            ((ScriptFunction) result.getReferredValue().value()).capturedContext = localContext;
         }
 
         return result;

@@ -14,7 +14,7 @@ public record ArrayPattern(@NotNull List<@NotNull UnpackPattern> elements) imple
 
     @Override
     public void apply(@NotNull ASTNode node, @NotNull Context ctx, @NotNull Value value, boolean isConst) {
-        if (value.getType() != Value.Type.ARRAY) {
+        if (value.type() != Value.Type.ARRAY) {
             throw new EvaluateException(node, "Value is not an array, cannot unpack");
         }
 

@@ -42,7 +42,7 @@ public class FutureObject extends InternalObject {
     public static ScriptObject then(@NotNull Context ctx) {
         ScriptObject wrapper = ctx.findMember("this").getReferredValue().getAsScriptObject();
         cn.encmys.ykdz.forest.hyphascript.function.Function func = ctx.findMember("function").getReferredValue().getAsFunction();
-        CompletableFuture<Reference> future = (CompletableFuture<Reference>) wrapper.findMember("future").getReferredValue().getValue();
+        CompletableFuture<Reference> future = (CompletableFuture<Reference>) wrapper.findMember("future").getReferredValue().value();
         if (future == null) {
             return InternalObjectManager.FUTURE.newInstance();
         }
@@ -58,7 +58,7 @@ public class FutureObject extends InternalObject {
     public static ScriptObject whenComplete(@NotNull Context ctx) {
         ScriptObject wrapper = ctx.findMember("this").getReferredValue().getAsScriptObject();
         cn.encmys.ykdz.forest.hyphascript.function.Function func = ctx.findMember("function").getReferredValue().getAsFunction();
-        CompletableFuture<Reference> future = (CompletableFuture<Reference>) wrapper.findMember("future").getReferredValue().getValue();
+        CompletableFuture<Reference> future = (CompletableFuture<Reference>) wrapper.findMember("future").getReferredValue().value();
         if (future == null) return InternalObjectManager.FUTURE.newInstance();
         future = future.whenCompleteAsync((result, throwable) -> func.call(new Value(wrapper), List.of(result.getReferredValue(), new Value(throwable)), ctx));
         wrapper.declareMember("future", new Reference(new Value(future)));
@@ -69,8 +69,8 @@ public class FutureObject extends InternalObject {
     @SuppressWarnings("unchecked")
     public static Object get(@NotNull Context ctx) throws ExecutionException, InterruptedException {
         ScriptObject wrapper = ctx.findMember("this").getReferredValue().getAsScriptObject();
-        CompletableFuture<Reference> future = (CompletableFuture<Reference>) wrapper.findMember("future").getReferredValue().getValue();
+        CompletableFuture<Reference> future = (CompletableFuture<Reference>) wrapper.findMember("future").getReferredValue().value();
         if (future == null) return null;
-        return future.get().getReferredValue().getValue();
+        return future.get().getReferredValue().value();
     }
 }

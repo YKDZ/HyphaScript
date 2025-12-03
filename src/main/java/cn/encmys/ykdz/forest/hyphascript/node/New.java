@@ -3,8 +3,8 @@ package cn.encmys.ykdz.forest.hyphascript.node;
 import cn.encmys.ykdz.forest.hyphascript.context.Context;
 import cn.encmys.ykdz.forest.hyphascript.exception.EvaluateException;
 import cn.encmys.ykdz.forest.hyphascript.function.Function;
-import cn.encmys.ykdz.forest.hyphascript.oop.ScriptObject;
 import cn.encmys.ykdz.forest.hyphascript.lexer.token.Token;
+import cn.encmys.ykdz.forest.hyphascript.oop.ScriptObject;
 import cn.encmys.ykdz.forest.hyphascript.utils.ReflectionUtils;
 import cn.encmys.ykdz.forest.hyphascript.value.Reference;
 import cn.encmys.ykdz.forest.hyphascript.value.Value;
@@ -29,7 +29,7 @@ public class New extends ASTNode {
     public @NotNull Reference evaluate(@NotNull Context ctx) {
         Value functionValue = function.evaluate(ctx).getReferredValue();
 
-        return switch (functionValue.getType()) {
+        return switch (functionValue.type()) {
             case FUNCTION, SCRIPT_OBJECT -> {
                 ScriptObject functionObj;
                 Function functionConstructor;
@@ -72,7 +72,7 @@ public class New extends ASTNode {
 
                 // 解析参数
                 Object[] evaluatedArgs = arguments.stream()
-                        .map(arg -> arg.evaluate(ctx).getReferredValue().getValue())
+                        .map(arg -> arg.evaluate(ctx).getReferredValue().value())
                         .toArray();
 
                 // 查找匹配的构造方法句柄

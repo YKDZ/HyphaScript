@@ -37,7 +37,7 @@ public class ContextUtils {
         try {
             return Optional.of(ctx.findMember(memberName))
                     .map(Reference::getReferredValue)
-                    .map(Value::getValue)
+                    .map(Value::value)
                     .filter(type::isInstance)
                     .map(v -> (T) v);
         } catch (Exception e) {

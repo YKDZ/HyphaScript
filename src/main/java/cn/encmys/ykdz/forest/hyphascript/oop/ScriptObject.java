@@ -226,7 +226,7 @@ public class ScriptObject implements Cloneable {
             Value value = ref.getReferredValue();
             Value.Type targetType = Value.Type.fromClass(type);
 
-            if (value.getType() != targetType) {
+            if (value.type() != targetType) {
                 return Optional.empty();
             }
 

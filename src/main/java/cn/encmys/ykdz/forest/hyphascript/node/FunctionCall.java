@@ -3,8 +3,8 @@ package cn.encmys.ykdz.forest.hyphascript.node;
 import cn.encmys.ykdz.forest.hyphascript.context.Context;
 import cn.encmys.ykdz.forest.hyphascript.exception.EvaluateException;
 import cn.encmys.ykdz.forest.hyphascript.function.Function;
-import cn.encmys.ykdz.forest.hyphascript.oop.internal.InternalObjectManager;
 import cn.encmys.ykdz.forest.hyphascript.lexer.token.Token;
+import cn.encmys.ykdz.forest.hyphascript.oop.internal.InternalObjectManager;
 import cn.encmys.ykdz.forest.hyphascript.utils.ReflectionUtils;
 import cn.encmys.ykdz.forest.hyphascript.value.Reference;
 import cn.encmys.ykdz.forest.hyphascript.value.Value;
@@ -53,7 +53,7 @@ public class FunctionCall extends ASTNode {
             functionValue = target.evaluate(ctx).getReferredValue();
         }
 
-        return switch (functionValue.getType()) {
+        return switch (functionValue.type()) {
             case SCRIPT_OBJECT -> {
                 Function function;
                 try {
@@ -74,8 +74,8 @@ public class FunctionCall extends ASTNode {
                     throw new EvaluateException(this, "Java method can only be called with list parameters");
 
                 // MethodHandle 的参数列表的第一个参数是实例本身（如果是实例方法）
-                final Object[] evaluatedArgs = Stream.concat(Stream.of(targetValue.getValue()), argList.stream()
-                                .map(arg -> arg.evaluate(ctx).getReferredValue().getValue()))
+                final Object[] evaluatedArgs = Stream.concat(Stream.of(targetValue.value()), argList.stream()
+                                .map(arg -> arg.evaluate(ctx).getReferredValue().value()))
                         .toArray();
 
                 MethodHandle[] methodHandles = functionValue.getAsMethodHandles();
@@ -99,7 +99,7 @@ public class FunctionCall extends ASTNode {
             }
 
             default ->
-                    throw new EvaluateException(this, "\"" + functionName + "\"" + " is not a function or java method but " + functionValue.getType());
+                    throw new EvaluateException(this, "\"" + functionName + "\"" + " is not a function or java method but " + functionValue.type());
         };
     }
 

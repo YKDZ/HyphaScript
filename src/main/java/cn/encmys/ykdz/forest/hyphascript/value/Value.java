@@ -122,7 +122,7 @@ public class Value {
         return expected == this.type;
     }
 
-    public boolean isType(@NotNull Type @NotNull ... expected) {
+    public boolean isType(@NotNull Type @NotNull... expected) {
         for (Type t : expected) {
             if (this.type.equals(t)) {
                 return true;
@@ -157,19 +157,21 @@ public class Value {
     }
 
     public char getAsChar() throws ValueException {
-        if (value == null) return '\0';
+        if (value == null)
+            return '\0';
 
         if (isType(Type.STRING)) {
             String s = (String) value;
             return s.isEmpty() ? '\0' : s.charAt(0);
         }
-        
+
         throw new ValueException(this, "Value " + this + " is not a string (for char conversion) but: " + type);
     }
 
     /**
      * 尽力将所有值转换为布尔值<br/>
-     * 遵守 <a href="https://developer.mozilla.org/en-US/docs/Glossary/Truthy">JS 规则</a>
+     * 遵守 <a href="https://developer.mozilla.org/en-US/docs/Glossary/Truthy">JS
+     * 规则</a>
      *
      */
     public boolean getAsBoolean() {

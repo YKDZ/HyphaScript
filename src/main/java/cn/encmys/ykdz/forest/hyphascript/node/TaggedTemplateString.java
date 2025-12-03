@@ -46,7 +46,7 @@ public class TaggedTemplateString extends ASTNode {
             functionValue = target.evaluate(ctx).getReferredValue();
         }
 
-        if (functionValue.getType() != Value.Type.FUNCTION) {
+        if (functionValue.type() != Value.Type.FUNCTION) {
             throw new RuntimeException("Tagged template tag must be a function");
         }
 
@@ -66,7 +66,7 @@ public class TaggedTemplateString extends ASTNode {
         List<Value> args = new ArrayList<>();
         args.add(stringsArray);
         args.addAll(values);
-        
+
         return functionValue.getAsFunction().call(targetValue, args, ctx);
     }
 }

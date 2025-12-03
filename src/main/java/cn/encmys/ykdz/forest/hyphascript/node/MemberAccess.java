@@ -32,7 +32,7 @@ public class MemberAccess extends ASTNode {
     }
 
     public static @NotNull Reference findMemberFromTarget(@NotNull Value target, @NotNull String member, boolean isRead, @NotNull ASTNode node) {
-        return switch (target.getType()) {
+        return switch (target.type()) {
             case SCRIPT_OBJECT, FUNCTION:
                 try {
                     ScriptObject object = target.getAsScriptObject();
@@ -83,7 +83,7 @@ public class MemberAccess extends ASTNode {
                 yield new Reference(new Value(null));
 
             default:
-                final Object targetJavaObject = target.getValue();
+                final Object targetJavaObject = target.value();
                 assert targetJavaObject != null;
                 try {
                     // .class 的实现
