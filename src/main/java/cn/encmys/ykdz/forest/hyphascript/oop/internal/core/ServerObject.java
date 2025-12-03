@@ -8,7 +8,6 @@ import cn.encmys.ykdz.forest.hyphascript.annotions.Static;
 import cn.encmys.ykdz.forest.hyphascript.context.Context;
 import cn.encmys.ykdz.forest.hyphascript.oop.internal.InternalObject;
 import cn.encmys.ykdz.forest.hyphascript.utils.ContextUtils;
-import cn.encmys.ykdz.forest.hyphautils.utils.HyphaAdventureUtils;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,9 +20,9 @@ public class ServerObject extends InternalObject {
     @Function("broadcast")
     @FunctionParas("msg")
     public static void broadcast(@NotNull Context ctx) {
-        ContextUtils.getStringParam(ctx, "msg")
+        ContextUtils.getComponentParam(ctx, "msg")
                 .ifPresent(msg -> HyphaScript.getPlugin()
-                        .ifPresent(instance -> instance.getServer().broadcast(HyphaAdventureUtils.getComponentFromMiniMessage(msg))));
+                        .ifPresent(instance -> instance.getServer().broadcast(msg)));
     }
 
     @Static

@@ -4,6 +4,7 @@ import cn.encmys.ykdz.forest.hyphascript.context.Context;
 import cn.encmys.ykdz.forest.hyphascript.oop.ScriptObject;
 import cn.encmys.ykdz.forest.hyphascript.value.Reference;
 import cn.encmys.ykdz.forest.hyphascript.value.Value;
+import net.kyori.adventure.text.Component;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
@@ -116,6 +117,18 @@ public class ContextUtils {
                     ctx.findMember(paramName)
                             .getReferredValue()
                             .getAsString()
+            );
+        } catch (Exception e) {
+            return Optional.empty();
+        }
+    }
+
+    public static @NotNull Optional<Component> getComponentParam(@NotNull Context ctx, @NotNull String paramName) {
+        try {
+            return Optional.of(
+                    ctx.findMember(paramName)
+                            .getReferredValue()
+                            .getAsAdventureComponent()
             );
         } catch (Exception e) {
             return Optional.empty();

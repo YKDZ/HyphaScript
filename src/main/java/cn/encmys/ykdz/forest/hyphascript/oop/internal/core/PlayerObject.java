@@ -8,7 +8,6 @@ import cn.encmys.ykdz.forest.hyphascript.annotions.Static;
 import cn.encmys.ykdz.forest.hyphascript.context.Context;
 import cn.encmys.ykdz.forest.hyphascript.oop.internal.InternalObject;
 import cn.encmys.ykdz.forest.hyphascript.utils.ContextUtils;
-import cn.encmys.ykdz.forest.hyphautils.utils.HyphaAdventureUtils;
 import net.kyori.adventure.key.Key;
 import org.bukkit.Location;
 import org.bukkit.Registry;
@@ -50,8 +49,8 @@ public class PlayerObject extends InternalObject {
     public static void message(@NotNull Context ctx) {
         ContextUtils.getPlayer(ctx)
                 .ifPresent(player ->
-                        ContextUtils.getStringParam(ctx, "msg")
-                                .ifPresent(msg -> HyphaAdventureUtils.sendPlayerMessage(player, msg))
+                        ContextUtils.getComponentParam(ctx, "msg")
+                                .ifPresent(player::sendMessage)
                 );
     }
 
