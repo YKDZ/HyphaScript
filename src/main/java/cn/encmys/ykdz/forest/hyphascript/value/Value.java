@@ -17,22 +17,16 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.IntStream;
 
-public class Value {
-    @NotNull
-    private final Type type;
-    @Nullable
-    private final Object value;
-
+public record Value(@NotNull Type type, @Nullable Object value) {
     /**
      * Construct a value with Type VOID
      * <p>
      * Try to get value of VOID value will throw ContextException
      *
-     * @see #getValue()
+     * @see #value ()
      */
     public Value() {
-        this.value = null;
-        this.type = Type.VOID;
+        this(Type.VOID, null);
     }
 
     /**
@@ -43,37 +37,7 @@ public class Value {
      * @param value Value of value
      */
     public Value(@Nullable Object value) {
-        this.type = calType(value);
-
-        if (value != null && type == Type.ARRAY && value.getClass().isArray()) {
-            final ScriptArray array = new ScriptArray();
-            IntStream.range(0, Array.getLength(value)).forEach(i -> {
-                Object elem = Array.get(value, i);
-                if (elem instanceof Reference) {
-                    array.put(i, (Reference) elem);
-                } else {
-                    array.put(i, new Reference(new Value(elem)));
-                }
-            });
-            this.value = array;
-        } else if (type == Type.SCRIPT_OBJECT && value instanceof Map) {
-            final ScriptObject scriptObject = new ScriptObject();
-            ((Map<?, ?>) value).forEach((k, v) -> {
-                final String name = String.valueOf(k);
-                final Reference ref = new Reference(new Value(v));
-                scriptObject.declareMember(name, ref);
-            });
-            this.value = scriptObject;
-        } else if (type == Type.STRING && value instanceof Character) {
-            this.value = String.valueOf(value);
-        } else {
-            this.value = value;
-        }
-    }
-
-    public Value(@NotNull Type type, @NotNull Object value) {
-        this.type = type;
-        this.value = value;
+        this(calType(value), modifyValue(value));
     }
 
     private static @NotNull Type calType(@Nullable Object value) {
@@ -108,21 +72,47 @@ public class Value {
         }
     }
 
-    public @Nullable Object getValue() throws ValueException {
-        if (type == Type.VOID)
-            throw new ValueException(this, "Impossible to get value of void.");
+    private static @Nullable Object modifyValue(@Nullable Object value) {
+        if (value != null && value.getClass().isArray()) {
+            final ScriptArray array = new ScriptArray();
+            IntStream.range(0, Array.getLength(value)).forEach(i -> {
+                Object elem = Array.get(value, i);
+                if (elem instanceof Reference) {
+                    array.put(i, (Reference) elem);
+                } else {
+                    array.put(i, new Reference(new Value(elem)));
+                }
+            });
+            return array;
+        } else if (!(value instanceof ScriptArray) && value instanceof Map) {
+            final ScriptObject scriptObject = new ScriptObject();
+            ((Map<?, ?>) value).forEach((k, v) -> {
+                final String name = String.valueOf(k);
+                final Reference ref = new Reference(new Value(v));
+                scriptObject.declareMember(name, ref);
+            });
+            return scriptObject;
+        } else if (value instanceof Character) {
+            return String.valueOf(value);
+        }
         return value;
     }
 
-    public @NotNull Type getType() {
-        return type;
+    /**
+     * @throws ValueException throws when get value of {@link Type#VOID}
+     */
+    @Override
+    public @Nullable Object value() {
+        if (type == Type.VOID)
+            throw new ValueException(this, "Impossible to get value of void.");
+        return value;
     }
 
     public boolean isType(@NotNull Type expected) {
         return expected == this.type;
     }
 
-    public boolean isType(@NotNull Type @NotNull... expected) {
+    public boolean isType(@NotNull Type @NotNull ... expected) {
         for (Type t : expected) {
             if (this.type.equals(t)) {
                 return true;
@@ -264,7 +254,7 @@ public class Value {
             case ARRAY -> getAsArray();
             case SCRIPT_OBJECT -> getAsScriptObject();
             case FUNCTION -> getAsFunction();
-            case JAVA_OBJECT -> getValue();
+            case JAVA_OBJECT -> value();
             case JAVA_CLASS -> getAsClass();
             case STRING -> getAsString();
             case NUMBER -> getAsBigDecimal();
@@ -298,14 +288,6 @@ public class Value {
         } catch (Exception e) {
             return "[Unreadable: " + type + " (" + e.getMessage() + ")]";
         }
-    }
-
-    @Override
-    public String toString() {
-        return "Value{" +
-                "value=" + value +
-                ", type=" + type +
-                '}';
     }
 
     @Override
