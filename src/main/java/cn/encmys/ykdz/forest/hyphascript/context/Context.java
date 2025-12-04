@@ -77,9 +77,9 @@ public class Context extends ScriptObject implements Cloneable {
     }
 
     public record Config(@NotNull RoundingMode divRoundingMode,
-            @NotNull RoundingMode equalRoundingMode,
-            boolean runtimeTypeCheck,
-            boolean componentDecorationOverflow) {
+                         @NotNull RoundingMode equalRoundingMode,
+                         boolean runtimeTypeCheck,
+                         boolean componentDecorationOverflow) {
     }
 
     public static class Builder {

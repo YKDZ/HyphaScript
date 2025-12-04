@@ -2,15 +2,10 @@ package cn.encmys.ykdz.forest.hyphascript.value;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
-import java.util.IdentityHashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.TreeMap;
+import java.util.*;
 
 public class ScriptArray extends TreeMap<Integer, Reference> {
-    private static final ThreadLocal<Set<ScriptArray>> HASH_CODE_VISITED = ThreadLocal
+    private static final @NotNull ThreadLocal<Set<ScriptArray>> HASH_CODE_VISITED = ThreadLocal
             .withInitial(() -> Collections.newSetFromMap(new IdentityHashMap<>()));
 
     public ScriptArray() {
@@ -33,7 +28,7 @@ public class ScriptArray extends TreeMap<Integer, Reference> {
 
     @Override
     public int hashCode() {
-        Set<ScriptArray> visited = HASH_CODE_VISITED.get();
+        final Set<ScriptArray> visited = HASH_CODE_VISITED.get();
         if (visited.contains(this)) {
             return 0;
         }

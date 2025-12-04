@@ -303,7 +303,7 @@ public class Value {
             return true;
         if (o == null || getClass() != o.getClass())
             return false;
-        Value value1 = (Value) o;
+        final Value value1 = (Value) o;
         return Objects.equals(value, value1.value);
     }
 
