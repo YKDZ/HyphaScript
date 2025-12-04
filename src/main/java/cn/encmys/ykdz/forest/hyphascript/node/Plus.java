@@ -32,7 +32,7 @@ public class Plus extends ASTNode {
         flattenOperands(operands);
 
         // Evaluate the first operand
-        Reference accumulator = operands.get(0).evaluate(ctx);
+        Reference accumulator = operands.getFirst().evaluate(ctx);
 
         // Optimization for String concatenation
         if (accumulator.getReferredValue().isType(Value.Type.STRING)) {

@@ -431,4 +431,16 @@ public class ScriptTest {
         assertFalse(evaluate("-0").getAsBoolean());
         assertFalse(evaluate("null").getAsBoolean());
     }
+
+    @Test
+    void imports() {
+        assertTrue(evaluate("""
+                import "java.util.Random" from "java";
+                
+                const random = new Random();
+                const bound = 5;
+                
+                random.nextDouble() * 5;
+                """).getAsBigDecimal().doubleValue() < 5);
+    }
 }

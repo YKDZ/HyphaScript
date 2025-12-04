@@ -21,7 +21,8 @@ public class ImportObjects extends ASTNode {
     @NotNull
     private final String from;
 
-    public ImportObjects(@NotNull Map<String, String> imported, @NotNull String from, @NotNull Token startToken, @NotNull Token endToken) {
+    public ImportObjects(@NotNull Map<String, String> imported, @NotNull String from, @NotNull Token startToken,
+            @NotNull Token endToken) {
         super(startToken, endToken);
         this.imported = imported;
         this.from = from;
@@ -29,10 +30,13 @@ public class ImportObjects extends ASTNode {
 
     @Override
     public @NotNull Reference evaluate(@NotNull Context ctx) {
-        if (ScriptManager.hasScript(from)) importScript(ctx);
-        else if (InternalObjectManager.hasObject(from)) importInternalObject(ctx);
+        if (InternalObjectManager.hasObject(from))
+            importInternalObject(ctx);
+        else if (ScriptManager.hasScript(from))
+            importScript(ctx);
         else
-            throw new EvaluateException(this, "Target namespace \"" + from + "\" is neither a internal object nor a script");
+            throw new EvaluateException(this,
+                    "Target namespace \"" + from + "\" is neither a internal object nor a script");
 
         return new Reference();
     }
@@ -68,7 +72,8 @@ public class ImportObjects extends ASTNode {
             Reference internalObjectMemberRef = pack.findLocalMemberOrCreateOne(name);
 
             if (internalObjectMemberRef.getReferredValue().isType(Value.Type.NULL)) {
-                throw new EvaluateException(this, "Member \"" + as + "\" imported from \"" + from + "\" does not exist");
+                throw new EvaluateException(this,
+                        "Member \"" + as + "\" imported from \"" + from + "\" does not exist");
             }
 
             try {
@@ -81,8 +86,10 @@ public class ImportObjects extends ASTNode {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         ImportObjects that = (ImportObjects) o;
         return Objects.equals(imported, that.imported) && Objects.equals(from, that.from);
     }

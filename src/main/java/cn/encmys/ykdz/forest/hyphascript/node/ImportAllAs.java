@@ -25,10 +25,13 @@ public class ImportAllAs extends ASTNode {
 
     @Override
     public @NotNull Reference evaluate(@NotNull Context ctx) {
-        if (ScriptManager.hasScript(from)) importScript(ctx);
-        else if (InternalObjectManager.hasObject(from)) importInternalObject(ctx);
+        if (InternalObjectManager.hasObject(from))
+            importInternalObject(ctx);
+        else if (ScriptManager.hasScript(from))
+            importScript(ctx);
         else
-            throw new EvaluateException(this, "Target namespace \"" + from + "\" is neither a internal object nor a script");
+            throw new EvaluateException(this,
+                    "Target namespace \"" + from + "\" is neither a internal object nor a script");
         return new Reference();
     }
 

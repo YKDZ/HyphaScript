@@ -16,7 +16,7 @@ public class DateObject extends InternalObject {
         } catch (Exception e) {
             HyphaScript.getLogger().ifPresent(
                     logger ->
-                            logger.warning("Error when getting current time using Date#now, 0 will be returned as fallback. " + e.getMessage())
+                            logger.warn("Error when getting current time using Date#now, 0 will be returned as fallback. " + e.getMessage())
             );
             return 0L;
         }

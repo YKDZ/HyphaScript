@@ -47,7 +47,8 @@ public class ReflectionUtils {
         return METHOD_CACHE.computeIfAbsent(targetClass, k -> new ConcurrentHashMap<>())
                 .computeIfAbsent(methodName, k -> {
                     List<MethodHandle> methodHandles = new ArrayList<>();
-                    Method[] methods = targetClass.getDeclaredMethods();
+                    // Use getMethods() to include inherited public methods
+                    Method[] methods = targetClass.getMethods();
 
                     for (Method method : methods) {
                         if (method.getName().equals(methodName)) {

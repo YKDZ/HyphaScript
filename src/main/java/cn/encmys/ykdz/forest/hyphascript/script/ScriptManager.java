@@ -19,6 +19,9 @@ import java.util.regex.Pattern;
 public class ScriptManager {
     private final static @NotNull Map<String, Script> scripts = new HashMap<>();
     private static final @NotNull Map<@NotNull String, @NotNull List<String>> memberGlobalScriptImported = new HashMap<>();
+    /**
+     * namespace:owner
+     */
     private static final @NotNull Map<String, String> scriptOwners = new HashMap<>();
 
     private ScriptManager() {
@@ -34,7 +37,7 @@ public class ScriptManager {
      */
     @NotNull
     public static Script createScript(@NotNull String namespace, @NotNull String scriptStr, @NotNull Context context,
-                                      @NotNull String owner) {
+            @NotNull String owner) {
         if (scripts.containsKey(namespace))
             throw new IllegalArgumentException("Script with namespace " + namespace + " already exists");
         Script script = new Script(scriptStr);

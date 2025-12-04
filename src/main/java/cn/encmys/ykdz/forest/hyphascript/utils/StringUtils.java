@@ -10,11 +10,16 @@ import java.lang.invoke.MethodType;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 public class StringUtils {
+    private static final ThreadLocal<Set<Object>> TO_STRING_VISITED = ThreadLocal
+            .withInitial(() -> Collections.newSetFromMap(new IdentityHashMap<>()));
+
     public static @NotNull String toString(@NotNull Class<?> clazz) {
         return "[Class: " + clazz.getSimpleName() + "]";
     }
@@ -37,20 +42,32 @@ public class StringUtils {
     }
 
     public static @NotNull String toString(@NotNull ScriptArray array) {
-        List<String> parts = new ArrayList<>();
-        int len = array.length();
-        for (int i = 0; i < len; i++) {
-            if (array.containsKey(i)) {
-                try {
-                    parts.add(array.get(i).getReferredValue().toReadableString());
-                } catch (Exception e) {
-                    parts.add("[Error]");
+        Set<Object> visited = TO_STRING_VISITED.get();
+        if (visited.contains(array)) {
+            return "[Circular Reference]";
+        }
+        visited.add(array);
+        try {
+            List<String> parts = new ArrayList<>();
+            int len = array.length();
+            for (int i = 0; i < len; i++) {
+                if (array.containsKey(i)) {
+                    try {
+                        parts.add(array.get(i).getReferredValue().toReadableString());
+                    } catch (Exception e) {
+                        parts.add("[Error]");
+                    }
+                } else {
+                    parts.add("null");
                 }
-            } else {
-                parts.add("null");
+            }
+            return parts.stream().collect(Collectors.joining(", ", "[", "]"));
+        } finally {
+            visited.remove(array);
+            if (visited.isEmpty()) {
+                TO_STRING_VISITED.remove();
             }
         }
-        return parts.stream().collect(Collectors.joining(", ", "[", "]"));
     }
 
     public static @NotNull String toString(@NotNull Component component) {

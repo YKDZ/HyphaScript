@@ -14,6 +14,11 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class ScriptObject implements Cloneable {
+    private static final ThreadLocal<Set<ScriptObject>> TO_STRING_VISITED = ThreadLocal
+            .withInitial(() -> Collections.newSetFromMap(new IdentityHashMap<>()));
+    private static final ThreadLocal<Set<ScriptObject>> HASH_CODE_VISITED = ThreadLocal
+            .withInitial(() -> Collections.newSetFromMap(new IdentityHashMap<>()));
+
     protected final @NotNull Map<String, Reference> members = new HashMap<>();
     private final @NotNull Map<@NotNull String, @NotNull Reference> exportedMembers = new HashMap<>();
     protected @NotNull Value __proto__;
@@ -265,18 +270,30 @@ public class ScriptObject implements Cloneable {
 
     @Override
     public @NotNull String toString() {
-        Map<String, Reference> temp = new HashMap<>(exportedMembers);
-        temp.putAll(members);
-        return temp.entrySet().stream()
-                .map(e -> {
-                    try {
-                        return (exportedMembers.containsKey(e.getKey()) ? "*" : "") + e.getKey() + ": "
-                                + e.getValue().getReferredValue().toReadableString();
-                    } catch (Exception ex) {
-                        return e.getKey() + ": [Error]";
-                    }
-                })
-                .collect(Collectors.joining(", ", "{", "}"));
+        Set<ScriptObject> visited = TO_STRING_VISITED.get();
+        if (visited.contains(this)) {
+            return "[Circular Reference]";
+        }
+        visited.add(this);
+        try {
+            Map<String, Reference> temp = new HashMap<>(exportedMembers);
+            temp.putAll(members);
+            return temp.entrySet().stream()
+                    .map(e -> {
+                        try {
+                            return (exportedMembers.containsKey(e.getKey()) ? "*" : "") + e.getKey() + ": "
+                                    + e.getValue().getReferredValue().toReadableString();
+                        } catch (Exception ex) {
+                            return e.getKey() + ": [Error]";
+                        }
+                    })
+                    .collect(Collectors.joining(", ", "{", "}"));
+        } finally {
+            visited.remove(this);
+            if (visited.isEmpty()) {
+                TO_STRING_VISITED.remove();
+            }
+        }
     }
 
     @Override
@@ -289,7 +306,19 @@ public class ScriptObject implements Cloneable {
 
     @Override
     public int hashCode() {
-        return Objects.hash(members, __proto__);
+        Set<ScriptObject> visited = HASH_CODE_VISITED.get();
+        if (visited.contains(this)) {
+            return 0;
+        }
+        visited.add(this);
+        try {
+            return Objects.hash(members, __proto__);
+        } finally {
+            visited.remove(this);
+            if (visited.isEmpty()) {
+                HASH_CODE_VISITED.remove();
+            }
+        }
     }
 
     public static class Builder {

@@ -13,13 +13,12 @@ import cn.encmys.ykdz.forest.hyphascript.value.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Consumer;
 
 public class ScriptFunction extends ScriptObject implements Function, Cloneable {
+    private static final ThreadLocal<Set<ScriptFunction>> HASH_CODE_VISITED = ThreadLocal.withInitial(HashSet::new);
+
     private @NotNull String name;
     private @NotNull LinkedHashMap<String, ASTNode> parameters;
     private @NotNull String uncertainParameter;
@@ -27,7 +26,8 @@ public class ScriptFunction extends ScriptObject implements Function, Cloneable 
     private @NotNull Context capturedContext;
     private @Nullable Value manualTarget;
 
-    public ScriptFunction(@NotNull String name, @NotNull LinkedHashMap<String, ASTNode> parameters, @NotNull String uncertainParameter, @NotNull ASTNode body, @NotNull Context capturedContext) {
+    public ScriptFunction(@NotNull String name, @NotNull LinkedHashMap<String, ASTNode> parameters,
+            @NotNull String uncertainParameter, @NotNull ASTNode body, @NotNull Context capturedContext) {
         super(InternalObjectManager.FUNCTION_PROTOTYPE);
         super.declareMember("prototype", new Reference(new Value(ScriptObject.Builder.create()
                 .with("constructor", new Value(this))
@@ -41,34 +41,30 @@ public class ScriptFunction extends ScriptObject implements Function, Cloneable 
 
     @Override
     public @NotNull Reference call(@NotNull Value target, @NotNull List<Value> arguments, @NotNull Context ctx) {
-        return executeCall(target, ctx, localContext ->
-                FunctionUtils.injectArguments(localContext, this.parameters, arguments, uncertainParameter)
-        );
+        return executeCall(target, ctx, localContext -> FunctionUtils.injectArguments(localContext, this.parameters,
+                arguments, uncertainParameter));
     }
 
     @Override
     public @NotNull Reference call(@NotNull Value target, @NotNull Map<String, Value> arguments, @NotNull Context ctx) {
-        return executeCall(target, ctx, localContext ->
-                FunctionUtils.injectArguments(localContext, this.parameters, arguments, uncertainParameter)
-        );
+        return executeCall(target, ctx, localContext -> FunctionUtils.injectArguments(localContext, this.parameters,
+                arguments, uncertainParameter));
     }
 
     public @NotNull Reference executeCall(
             @NotNull Value targetValue,
             @NotNull Context ctx,
-            @NotNull Consumer<@NotNull Context> argumentInjector
-    ) {
+            @NotNull Consumer<@NotNull Context> argumentInjector) {
         Value target = manualTarget == null ? targetValue : manualTarget;
 
-        Context localContext = new Context(ctx.equals(capturedContext) ? ctx : ContextUtils.linkContext(
-                ctx.clone(),
-                capturedContext.clone()
-        ));
+        Context localContext = new Context(ctx.equals(capturedContext) ? ctx
+                : ContextUtils.linkContext(
+                        ctx.clone(),
+                        capturedContext.clone()));
         localContext.declareMember("this", target);
 
         try {
-            Function superConstructor = super
-                    .findMember("__home_object__").getReferredValue().getAsScriptObject()
+            Function superConstructor = super.findMember("__home_object__").getReferredValue().getAsScriptObject()
                     .getProto().getAsScriptObject()
                     .findMember("constructor").getReferredValue().getAsFunction();
             superConstructor.setManualTarget(target);
@@ -88,8 +84,9 @@ public class ScriptFunction extends ScriptObject implements Function, Cloneable 
         }
         // 若函数的返回值是函数
         // 则当前上下文链需要被储存到返回的函数中
-        if (!result.getReferredValue().isType(Value.Type.VOID) && result.getReferredValue().value() instanceof ScriptFunction) {
-            ((ScriptFunction) result.getReferredValue().value()).capturedContext = localContext;
+        if (!result.getReferredValue().isType(Value.Type.VOID)
+                && result.getReferredValue().value() instanceof ScriptFunction function) {
+            function.capturedContext = localContext;
         }
 
         return result;
@@ -131,15 +128,30 @@ public class ScriptFunction extends ScriptObject implements Function, Cloneable 
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         ScriptFunction that = (ScriptFunction) o;
-        return Objects.equals(parameters, that.parameters) && Objects.equals(body, that.body) && Objects.equals(capturedContext, that.capturedContext);
+        return Objects.equals(parameters, that.parameters) && Objects.equals(body, that.body)
+                && Objects.equals(capturedContext, that.capturedContext);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(parameters, body, capturedContext);
+        Set<ScriptFunction> visited = HASH_CODE_VISITED.get();
+        if (visited.contains(this)) {
+            return 0;
+        }
+        visited.add(this);
+        try {
+            return Objects.hash(parameters, body, capturedContext);
+        } finally {
+            visited.remove(this);
+            if (visited.isEmpty()) {
+                HASH_CODE_VISITED.remove();
+            }
+        }
     }
 
     @Override

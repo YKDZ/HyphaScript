@@ -17,7 +17,15 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.IntStream;
 
-public record Value(@NotNull Type type, @Nullable Object value) {
+public class Value {
+    private final @NotNull Type type;
+    private final @Nullable Object value;
+
+    public Value(@NotNull Type type, @Nullable Object value) {
+        this.type = type;
+        this.value = value;
+    }
+
     /**
      * Construct a value with Type VOID
      * <p>
@@ -73,7 +81,7 @@ public record Value(@NotNull Type type, @Nullable Object value) {
     }
 
     private static @Nullable Object modifyValue(@Nullable Object value) {
-        if (value != null && value.getClass().isArray()) {
+        if (value != null && value.getClass().isArray() && !(value instanceof MethodHandle[])) {
             final ScriptArray array = new ScriptArray();
             IntStream.range(0, Array.getLength(value)).forEach(i -> {
                 Object elem = Array.get(value, i);
@@ -101,7 +109,6 @@ public record Value(@NotNull Type type, @Nullable Object value) {
     /**
      * @throws ValueException throws when get value of {@link Type#VOID}
      */
-    @Override
     public @Nullable Object value() {
         if (type == Type.VOID)
             throw new ValueException(this, "Impossible to get value of void.");
@@ -304,6 +311,18 @@ public record Value(@NotNull Type type, @Nullable Object value) {
     public int hashCode() {
         return Objects.hashCode(value);
     }
+
+    public @NotNull Type type() {
+        return type;
+    }
+
+    @Override
+    public String toString() {
+        return "Value[" +
+                "type=" + type + ", " +
+                "value=" + value + ']';
+    }
+
 
     public enum Type {
         VOID(null),
