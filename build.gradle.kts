@@ -4,6 +4,7 @@ plugins {
     `java-library`
     id("java")
     id("maven-publish")
+    kotlin("jvm")
 }
 
 group = "cn.encmys.ykdz.forest"
@@ -31,6 +32,7 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter:6.0.1")
     testImplementation("org.junit.platform:junit-platform-launcher")
     testImplementation("me.clip:placeholderapi:2.11.7")
+    implementation(kotlin("stdlib-jdk8"))
 }
 
 java {
