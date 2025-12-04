@@ -12,7 +12,8 @@ public class InstanceOf extends ASTNode {
     private final @NotNull ASTNode left;
     private final @NotNull ASTNode right;
 
-    protected InstanceOf(@NotNull ASTNode left, @NotNull ASTNode right, @NotNull Token startToken, @NotNull Token endToken) {
+    public InstanceOf(@NotNull ASTNode left, @NotNull ASTNode right, @NotNull Token startToken,
+            @NotNull Token endToken) {
         super(startToken, endToken);
         this.left = left;
         this.right = right;
