@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.2.0-Beta 2025.12.06
+
+### Added
+
+- DateObject
+- More MathObject
+- Tagged template string
+- MiniMessageObject
+- for in & of
+- instanceof
+- array now store as map
+- import overhaul
+- remove HyphaUtils
+
 ## 0.1.3-Beta 2025.11.27
 
 ### Added
