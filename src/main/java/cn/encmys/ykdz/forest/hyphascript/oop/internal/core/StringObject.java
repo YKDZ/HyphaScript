@@ -30,4 +30,13 @@ public class StringObject extends InternalObject {
 
         return str.replace(target, replacement);
     }
+
+    @Function("split")
+    @FunctionParas({"regex"})
+    public static String[] split(@NotNull Context ctx) {
+        final String str = ctx.findMember("this").getReferredValue().getAsString();
+        final String target = ctx.findMember("regex").getReferredValue().getAsString();
+
+        return str.split(target);
+    }
 }
