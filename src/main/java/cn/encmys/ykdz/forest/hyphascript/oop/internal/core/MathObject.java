@@ -18,7 +18,7 @@ public class MathObject extends InternalObject {
     @Function("floor")
     @FunctionParas("target")
     public static BigDecimal floor(@NotNull Context ctx) {
-        BigDecimal target = ctx.findMember("target").getReferredValue().getAsBigDecimal();
+        final BigDecimal target = ctx.findMember("target").getReferredValue().getAsBigDecimal();
         return target.setScale(0, RoundingMode.FLOOR);
     }
 
@@ -26,14 +26,14 @@ public class MathObject extends InternalObject {
     @Function("ceil")
     @FunctionParas("target")
     public static BigDecimal ceil(@NotNull Context ctx) {
-        BigDecimal target = ctx.findMember("target").getReferredValue().getAsBigDecimal();
+        final BigDecimal target = ctx.findMember("target").getReferredValue().getAsBigDecimal();
         return target.setScale(0, RoundingMode.CEILING);
     }
 
     @Static
     @Function("round")
     public static BigDecimal round(@NotNull Context ctx) {
-        BigDecimal target = ctx.findMember("target").getReferredValue().getAsBigDecimal();
+        final BigDecimal target = ctx.findMember("target").getReferredValue().getAsBigDecimal();
         return target.round(MathContext.UNLIMITED);
     }
 
@@ -41,5 +41,33 @@ public class MathObject extends InternalObject {
     @Function("random")
     public static double random(@NotNull Context ctx) {
         return Math.random();
+    }
+
+    @Static
+    @Function("min")
+    @FunctionParas({"a", "b"})
+    public static BigDecimal min(@NotNull Context ctx) {
+        final BigDecimal a = ctx.findMember("a").getReferredValue().getAsBigDecimal();
+        final BigDecimal b = ctx.findMember("b").getReferredValue().getAsBigDecimal();
+
+        return a.compareTo(b) <= 0 ? a : b;
+    }
+
+    @Static
+    @Function("max")
+    @FunctionParas({"a", "b"})
+    public static BigDecimal max(@NotNull Context ctx) {
+        final BigDecimal a = ctx.findMember("a").getReferredValue().getAsBigDecimal();
+        final BigDecimal b = ctx.findMember("b").getReferredValue().getAsBigDecimal();
+
+        return a.compareTo(b) >= 0 ? a : b;
+    }
+
+    @Static
+    @Function("log10")
+    @FunctionParas({"a"})
+    public static BigDecimal log10(@NotNull Context ctx) {
+        final BigDecimal a = ctx.findMember("a").getReferredValue().getAsBigDecimal();
+        return BigDecimal.valueOf(Math.log10(a.doubleValue()));
     }
 }

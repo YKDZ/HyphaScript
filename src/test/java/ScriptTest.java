@@ -443,4 +443,11 @@ public class ScriptTest {
                 random.nextDouble() * 5;
                 """).getAsBigDecimal().doubleValue() < 5);
     }
+
+    @Test
+    void math() {
+        assertEquals(5d, evaluate("Math.min(10, 5)").getAsBigDecimal().doubleValue());
+        assertEquals(10d, evaluate("Math.max(10, 5)").getAsBigDecimal().doubleValue());
+        assertEquals(1d, evaluate("Math.log10(10)").getAsBigDecimal().doubleValue());
+    }
 }
