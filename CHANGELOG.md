@@ -6,6 +6,10 @@
 
 - StringObject split
 
+### Fixed
+
+- Error format can not work when cross module
+
 ## 0.2.0-Beta 2025.12.06
 
 ### Added
