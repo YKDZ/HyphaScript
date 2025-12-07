@@ -4,11 +4,10 @@ plugins {
     `java-library`
     id("java")
     id("maven-publish")
-    kotlin("jvm")
 }
 
 group = "cn.encmys.ykdz.forest"
-version = "0.2.0-Beta"
+version = "0.2.1-Beta"
 
 repositories {
     mavenLocal()
@@ -32,7 +31,6 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter:6.0.1")
     testImplementation("org.junit.platform:junit-platform-launcher")
     testImplementation("me.clip:placeholderapi:2.11.7")
-    implementation(kotlin("stdlib-jdk8"))
 }
 
 java {
