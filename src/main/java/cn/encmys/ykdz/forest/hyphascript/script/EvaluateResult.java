@@ -8,8 +8,8 @@ import java.util.Arrays;
 import java.util.stream.Collectors;
 
 public record EvaluateResult(@NotNull Type type, @NotNull String script, @NotNull Value value, long timeCost,
-                             @NotNull String errorMsg, @Nullable Throwable cause,
-                             int errorStartLine, int errorStartColumn, int errorEndLine, int errorEndColumn) {
+        @NotNull String errorMsg, @Nullable Throwable cause,
+        int errorStartLine, int errorStartColumn, int errorEndLine, int errorEndColumn) {
     @Override
     public @NotNull String toString() {
         if (type == Type.SUCCESS) {

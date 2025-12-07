@@ -31,7 +31,8 @@ public class Script {
     private boolean isEvaluated = false;
 
     /**
-     * Constructs a Script instance with the specified script content and execution context.
+     * Constructs a Script instance with the specified script content and execution
+     * context.
      *
      * @param script the source code of the script
      */
@@ -40,7 +41,8 @@ public class Script {
     }
 
     /**
-     * Parses the script into an AST. Will only execute parsing once per script version,
+     * Parses the script into an AST. Will only execute parsing once per script
+     * version,
      * subsequent calls return cached result.
      *
      * @return parsing result with detailed status and metrics
@@ -49,16 +51,16 @@ public class Script {
         long startTime = System.currentTimeMillis();
 
         if (isParsed) {
-            return parserResult != null ? parserResult : new ParserResult(
-                    script,
-                    ParserResult.Type.PARSED,
-                    0,
-                    "Parser result not initialized",
-                    0,
-                    0,
-                    0,
-                    null
-            );
+            return parserResult != null ? parserResult
+                    : new ParserResult(
+                            script,
+                            ParserResult.Type.PARSED,
+                            0,
+                            "Parser result not initialized",
+                            0,
+                            0,
+                            0,
+                            null);
         }
 
         try {
@@ -85,6 +87,7 @@ public class Script {
      */
     public @NotNull EvaluateResult evaluate(@NotNull Context context) {
         this.context = context;
+        this.context.setScriptSource(script);
 
         long startTime = System.currentTimeMillis();
 
@@ -100,6 +103,9 @@ public class Script {
             isEvaluated = true;
             return createSuccessEvaluationResult(result, startTime);
         } catch (EvaluateException e) {
+            if (e.getScript() == null) {
+                e.setScript(script);
+            }
             return createEvaluationErrorResult(e, startTime);
         }
     }
@@ -114,8 +120,7 @@ public class Script {
                 0,
                 0,
                 0,
-                null
-        );
+                null);
         isParsed = true;
     }
 
@@ -129,8 +134,7 @@ public class Script {
                 e.getLine(),
                 e.getColumn(),
                 1,
-                e
-        );
+                e);
     }
 
     private void handleParserError(@NotNull ParserException e, long startTime) {
@@ -143,8 +147,7 @@ public class Script {
                 e.getToken().line(),
                 e.getToken().column(),
                 e.getToken().value().length(),
-                e
-        );
+                e);
     }
 
     private @NotNull Value evaluateNodes(@NotNull Context context) throws EvaluateException {
@@ -164,15 +167,14 @@ public class Script {
                 duration,
                 "Evaluation successful",
                 null,
-                0, 0, 0, 0
-        );
+                0, 0, 0, 0);
     }
 
     private @NotNull EvaluateResult createEvaluationErrorResult(@NotNull EvaluateException e, long startTime) {
         long duration = System.currentTimeMillis() - startTime;
         return new EvaluateResult(
                 EvaluateResult.Type.EVALUATE_ERROR,
-                script,
+                e.getScript() != null ? e.getScript() : script,
                 new Value(),
                 duration,
                 e.getMessage(),
@@ -180,11 +182,11 @@ public class Script {
                 e.getNode().getStartToken().line(),
                 e.getNode().getStartToken().column(),
                 e.getNode().getEndToken().line(),
-                e.getNode().getEndToken().column()
-        );
+                e.getNode().getEndToken().column());
     }
 
-    private @NotNull EvaluateResult createEvaluationErrorFromParseResult(@NotNull ParserResult parseResult, long startTime) {
+    private @NotNull EvaluateResult createEvaluationErrorFromParseResult(@NotNull ParserResult parseResult,
+            long startTime) {
         long duration = System.currentTimeMillis() - startTime;
         return new EvaluateResult(
                 EvaluateResult.Type.PARSER_ERROR,
@@ -196,8 +198,7 @@ public class Script {
                 parseResult.errorLine(),
                 parseResult.errorColumn(),
                 parseResult.errorLine(),
-                parseResult.errorColumn()
-        );
+                parseResult.errorColumn());
     }
 
     @NotNull
@@ -239,7 +240,8 @@ public class Script {
     }
 
     public @NotNull Context getContext() {
-        if (!isEvaluated) throw new IllegalStateException("Evaluated script is not yet evaluated.");
+        if (!isEvaluated)
+            throw new IllegalStateException("Evaluated script is not yet evaluated.");
         assert context != null;
         return context;
     }

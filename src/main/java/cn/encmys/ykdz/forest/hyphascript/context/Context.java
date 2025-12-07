@@ -15,6 +15,7 @@ import java.util.List;
 public class Context extends ScriptObject implements Cloneable {
     private @Nullable List<@NotNull String> importedJavaClasses;
     private @NotNull Config config = new Config(RoundingMode.HALF_UP, RoundingMode.HALF_UP, false, false);
+    private @Nullable String scriptSource;
 
     /**
      * Construct a new context with GLOBAL_OBJECT as parent.
@@ -43,6 +44,14 @@ public class Context extends ScriptObject implements Cloneable {
 
     public void setConfig(@NotNull Config config) {
         this.config = config;
+    }
+
+    public @Nullable String getScriptSource() {
+        return scriptSource;
+    }
+
+    public void setScriptSource(@Nullable String scriptSource) {
+        this.scriptSource = scriptSource;
     }
 
     public @NotNull List<String> getImportedJavaClasses() {
@@ -77,9 +86,9 @@ public class Context extends ScriptObject implements Cloneable {
     }
 
     public record Config(@NotNull RoundingMode divRoundingMode,
-                         @NotNull RoundingMode equalRoundingMode,
-                         boolean runtimeTypeCheck,
-                         boolean componentDecorationOverflow) {
+            @NotNull RoundingMode equalRoundingMode,
+            boolean runtimeTypeCheck,
+            boolean componentDecorationOverflow) {
     }
 
     public static class Builder {

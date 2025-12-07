@@ -16,7 +16,7 @@ public class UnaryOperation extends ASTNode {
     private final ASTNode target;
 
     public UnaryOperation(@NotNull Token.Type operator, @NotNull ASTNode target, @NotNull Token startToken,
-                          @NotNull Token endToken) {
+            @NotNull Token endToken) {
         super(startToken, endToken);
         this.operator = operator;
         this.target = target;
@@ -28,8 +28,6 @@ public class UnaryOperation extends ASTNode {
 
         return switch (operator) {
             case BANG -> {
-                if (!targetValue.isType(Value.Type.BOOLEAN, Value.Type.NULL))
-                    throw new EvaluateException(this, "! operator can only be casted in boolean.");
                 yield new Reference(new Value(!targetValue.getAsBoolean()));
             }
             case MINUS -> {

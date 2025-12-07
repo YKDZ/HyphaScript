@@ -1,6 +1,7 @@
 package cn.encmys.ykdz.forest.hyphascript.function;
 
 import cn.encmys.ykdz.forest.hyphascript.context.Context;
+import cn.encmys.ykdz.forest.hyphascript.exception.EvaluateException;
 import cn.encmys.ykdz.forest.hyphascript.exception.ReturnNotificationException;
 import cn.encmys.ykdz.forest.hyphascript.node.ASTNode;
 import cn.encmys.ykdz.forest.hyphascript.oop.ScriptObject;
@@ -81,6 +82,11 @@ public class ScriptFunction extends ScriptObject implements Function, Cloneable 
             body.evaluate(localContext);
         } catch (ReturnNotificationException e) {
             result = e.getReturnedReference();
+        } catch (EvaluateException e) {
+            if (e.getScript() == null && capturedContext.getScriptSource() != null) {
+                e.setScript(capturedContext.getScriptSource());
+            }
+            throw e;
         }
         // 若函数的返回值是函数
         // 则当前上下文链需要被储存到返回的函数中

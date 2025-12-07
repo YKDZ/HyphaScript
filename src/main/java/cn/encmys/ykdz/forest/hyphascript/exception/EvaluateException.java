@@ -8,6 +8,7 @@ public class EvaluateException extends RuntimeException {
     private final @NotNull String message;
     private final @NotNull ASTNode node;
     private final @Nullable Throwable cause;
+    private @Nullable String script;
 
     public EvaluateException(@NotNull ASTNode node, @NotNull String message) {
         super();
@@ -21,6 +22,14 @@ public class EvaluateException extends RuntimeException {
         this.message = message;
         this.node = node;
         this.cause = cause;
+    }
+
+    public void setScript(@Nullable String script) {
+        this.script = script;
+    }
+
+    public @Nullable String getScript() {
+        return script;
     }
 
     public @NotNull ASTNode getNode() {

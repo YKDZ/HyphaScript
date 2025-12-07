@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.1-Beta 2025.12.07
+
+### Added
+
+- StringObject split
+
 ## 0.2.0-Beta 2025.12.06
 
 ### Added
