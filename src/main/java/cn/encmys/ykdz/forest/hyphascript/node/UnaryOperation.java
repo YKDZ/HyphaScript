@@ -15,7 +15,8 @@ public class UnaryOperation extends ASTNode {
     @NotNull
     private final ASTNode target;
 
-    public UnaryOperation(@NotNull Token.Type operator, @NotNull ASTNode target, @NotNull Token startToken, @NotNull Token endToken) {
+    public UnaryOperation(@NotNull Token.Type operator, @NotNull ASTNode target, @NotNull Token startToken,
+                          @NotNull Token endToken) {
         super(startToken, endToken);
         this.operator = operator;
         this.target = target;
@@ -28,17 +29,17 @@ public class UnaryOperation extends ASTNode {
         return switch (operator) {
             case BANG -> {
                 if (!targetValue.isType(Value.Type.BOOLEAN, Value.Type.NULL))
-                    throw new IllegalArgumentException("! operator can only be casted in boolean.");
+                    throw new EvaluateException(this, "! operator can only be casted in boolean.");
                 yield new Reference(new Value(!targetValue.getAsBoolean()));
             }
             case MINUS -> {
                 if (!targetValue.isType(Value.Type.NUMBER, Value.Type.NULL))
-                    throw new IllegalArgumentException("- operator can only be casted in number.");
+                    throw new EvaluateException(this, "- operator can only be casted in number.");
                 yield new Reference(new Value(targetValue.getAsBigDecimal().negate()));
             }
             case NOT -> {
                 if (!targetValue.isType(Value.Type.NUMBER, Value.Type.NULL))
-                    throw new IllegalArgumentException("~ operator can only be casted in number.");
+                    throw new EvaluateException(this, "~ operator can only be casted in number.");
                 yield new Reference(new Value(targetValue.getAsBigDecimal().toBigInteger().not()));
             }
             case TYPEOF -> new Reference(new Value(targetValue.type().name()));
@@ -56,8 +57,10 @@ public class UnaryOperation extends ASTNode {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         UnaryOperation that = (UnaryOperation) o;
         return operator == that.operator && Objects.equals(target, that.target);
     }

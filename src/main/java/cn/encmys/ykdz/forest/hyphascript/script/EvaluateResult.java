@@ -9,8 +9,7 @@ import java.util.stream.Collectors;
 
 public record EvaluateResult(@NotNull Type type, @NotNull String script, @NotNull Value value, long timeCost,
                              @NotNull String errorMsg, @Nullable Throwable cause,
-                             int errorStartLine, int errorStartColumn, int errorEndLine, int errorEndColumn
-) {
+                             int errorStartLine, int errorStartColumn, int errorEndLine, int errorEndColumn) {
     @Override
     public @NotNull String toString() {
         if (type == Type.SUCCESS) {
@@ -25,8 +24,7 @@ public record EvaluateResult(@NotNull Type type, @NotNull String script, @NotNul
             sb.append("\n").append(
                     Arrays.stream(cause.getStackTrace())
                             .map(StackTraceElement::toString)
-                            .collect(Collectors.joining("\n"))
-            );
+                            .collect(Collectors.joining("\n")));
         }
 
         // 添加具体错误位置信息
@@ -40,14 +38,14 @@ public record EvaluateResult(@NotNull Type type, @NotNull String script, @NotNul
         sb.append("\n");
 
         // 显示错误行及附近1行上下文
-        int startLineIndex = Math.max(0, errorStartLine - 2);
-        int endLineIndex = Math.min(lines.length, errorEndLine + 1);
+        int startLineIndex = Math.max(0, errorStartLine - 2); // -2 表示向前显示1行上下文
+        int endLineIndex = Math.min(lines.length, errorEndLine + 1); // +1 表示向后显示1行上下文
 
         for (int i = startLineIndex; i < endLineIndex; i++) {
             String line = lines[i];
+            int currentLineNum = i + 1;
             sb.append(line).append("\n");
 
-            int currentLineNum = i + 1;
             if (currentLineNum >= errorStartLine && currentLineNum <= errorEndLine) {
                 int lineLength = line.length();
 
@@ -73,11 +71,13 @@ public record EvaluateResult(@NotNull Type type, @NotNull String script, @NotNul
                     length = Math.min(length, lineLength - spaces);
                 }
 
-                if (length > 0 && spaces + length <= lineLength + 1) { // Allow 1 char overflow for empty lines or end of line
+                if (length > 0 && spaces + length <= lineLength + 1) { // Allow 1 char overflow for empty lines or end
+                    // of line
                     // Actually, repeat throws if count < 0.
-                    // And we want to avoid printing beyond line if possible, but for empty line maybe we want a caret?
+                    // And we want to avoid printing beyond line if possible, but for empty line
+                    // maybe we want a caret?
                     // If line is empty, spaces=0, length=1. " " * 0 + "^" * 1 = "^".
-                    // If line is "abc", spaces=3, length=1. "   ^".
+                    // If line is "abc", spaces=3, length=1. " ^".
 
                     String indicator = " ".repeat(spaces) + "^".repeat(length);
                     sb.append(indicator).append("\n");
