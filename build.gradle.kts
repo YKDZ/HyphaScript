@@ -18,13 +18,13 @@ repositories {
 
 dependencies {
     annotationProcessor("org.jetbrains:annotations:26.0.2-1")
-    compileOnly("io.papermc.paper:paper-api:1.21.10-R0.1-SNAPSHOT")
+    compileOnly("io.papermc.paper:paper-api:1.21.11-pre5-R0.1-SNAPSHOT")
     compileOnly("net.kyori:adventure-api:4.25.0")
     compileOnly("net.kyori:adventure-text-minimessage:4.25.0")
     compileOnly("net.kyori:adventure-text-serializer-plain:4.25.0")
     compileOnly("me.clip:placeholderapi:2.11.7")
 
-    testImplementation("io.papermc.paper:paper-api:1.21.10-R0.1-SNAPSHOT")
+    testImplementation("io.papermc.paper:paper-api:1.21.11-pre5-R0.1-SNAPSHOT")
     testImplementation("net.kyori:adventure-api:4.25.0")
     testImplementation("net.kyori:adventure-text-minimessage:4.25.0")
     testImplementation("net.kyori:adventure-text-serializer-plain:4.25.0")
