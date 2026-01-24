@@ -28,7 +28,7 @@ dependencies {
     testImplementation("net.kyori:adventure-api:4.26.1")
     testImplementation("net.kyori:adventure-text-minimessage:4.26.1")
     testImplementation("net.kyori:adventure-text-serializer-plain:4.26.1")
-    testImplementation("org.junit.jupiter:junit-jupiter:6.0.1")
+    testImplementation("org.junit.jupiter:junit-jupiter:6.0.2")
     testImplementation("org.junit.platform:junit-platform-launcher")
     testImplementation("me.clip:placeholderapi:2.11.7")
 }
