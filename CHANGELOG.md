@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.2-Beta 2026.01.24
+
+### Changed
+
+- Bump deps
+
 ## 0.2.1-Beta 2025.12.07
 
 ### Added
